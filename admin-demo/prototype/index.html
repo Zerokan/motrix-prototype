@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motrix Operator Panel — Prototype</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root{--bg:#f3f6fb;--surface:#fff;--surface-2:#f7f9fc;--ink:#0f1a2e;--muted:#69758c;--line:#e6ebf3;
+    --sidebar:#0D1B3E;--sidebar-2:#0a1530;--sidebar-ink:#aeb9d4;--sidebar-ink-2:#7c88a8;
+    --primary:#E30A17;--primary-2:#ff3d4a;--primary-soft:#fdeaec;--navy:#0D1B3E;
+    --ok:#15a34a;--ok-s:#e2f5e9;--warn:#c77b0a;--warn-s:#fbf0dc;--bad:#dc2626;--bad-s:#fce4e4;--info:#2563eb;--info-s:#e5edfd;
+    --shadow:0 1px 2px rgba(15,26,46,.05),0 8px 26px rgba(15,26,46,.06);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+  /* sidebar */
+  .side{background:var(--sidebar);color:var(--sidebar-ink);position:sticky;top:0;height:100vh;overflow-y:auto;padding-bottom:2rem}
+  .brand{display:flex;align-items:center;gap:.5rem;padding:1.05rem 1.2rem;font-weight:800;font-size:1.12rem;color:#fff;border-bottom:1px solid rgba(255,255,255,.07);position:sticky;top:0;background:var(--sidebar);z-index:2}
+  .brand .b{color:var(--primary)} .brand small{font-weight:600;color:var(--sidebar-ink-2);font-size:.58rem;letter-spacing:.14em;display:block}
+  .mod{margin-top:.2rem}
+  .mod>.mh{display:flex;align-items:center;gap:.55rem;padding:.5rem 1.2rem;color:var(--sidebar-ink);font-weight:700;font-size:.83rem;cursor:pointer;user-select:none}
+  .mod>.mh:hover{color:#fff} .mod>.mh .ic{width:16px;text-align:center;opacity:.85} .mod>.mh .ar{margin-left:auto;font-size:.6rem;opacity:.6;transition:.15s}
+  .mod.open>.mh .ar{transform:rotate(90deg)} .mod.open>.mh{color:#fff}
+  .sub{display:none;padding:.1rem 0 .3rem} .mod.open .sub{display:block}
+  .sub a{display:block;padding:.34rem 1.2rem .34rem 2.5rem;color:var(--sidebar-ink-2);text-decoration:none;font-size:.79rem;cursor:pointer;border-left:3px solid transparent}
+  .sub a:hover{color:#fff;background:rgba(255,255,255,.04)} .sub a.on{color:#fff;background:linear-gradient(90deg,rgba(227,10,23,.16),transparent);border-left-color:var(--primary)}
+  /* topbar */
+  .main{min-width:0;display:flex;flex-direction:column}
+  .top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:1rem;padding:.75rem 1.5rem}
+  .crumb{font-size:.7rem;color:var(--muted);font-weight:600}.top h1{font-size:1.05rem;font-weight:750}
+  .top .sp{flex:1}.search{border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:.42rem .7rem;font-size:.8rem;min-width:180px;color:var(--ink)}
+  .city{border:1px solid var(--line);border-radius:9px;padding:.42rem .7rem;font-size:.8rem;font-weight:700;display:flex;align-items:center;gap:.4rem}.city .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .av{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem}
+  .langdd{position:relative}.langtrig{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:.4rem .6rem;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit}.langtrig .ca{color:var(--muted);font-size:.7rem}
+  .langmenu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:.3rem;min-width:168px;display:none;z-index:40}.langdd.open .langmenu{display:block}
+  .langmenu button{display:flex;align-items:center;gap:.55rem;width:100%;border:0;background:transparent;color:var(--ink);font-weight:600;font-size:.84rem;padding:.5rem .6rem;border-radius:8px;cursor:pointer;font-family:inherit;text-align:left}.langmenu button:hover{background:var(--surface-2)}.langmenu button.on{background:var(--primary-soft);color:var(--primary)}
+  .content{padding:1.4rem 1.5rem 3rem}
+  /* components */
+  .grid{display:grid;gap:1rem}.kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow)}.card.pad{padding:1.1rem 1.2rem}
+  .kpi{padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.15rem}.kpi .l{font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}.kpi .n{font-size:1.7rem;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}.kpi .d{font-size:.72rem;font-weight:700}.kpi .d.up{color:var(--ok)}.kpi .d.down{color:var(--bad)}
+  .row{display:grid;gap:1rem;margin-top:1rem}.r-2{grid-template-columns:1.6fr 1fr}.r-3{grid-template-columns:repeat(3,1fr)}@media(max-width:1000px){.r-2,.r-3{grid-template-columns:1fr}}
+  .ch{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;border-bottom:1px solid var(--line)}.ch h3{font-size:.92rem;font-weight:750}.ch .sub{font-size:.72rem;color:var(--muted)}
+  .btn{border:0;background:var(--primary);color:#fff;border-radius:9px;padding:.5rem .9rem;font-weight:700;font-size:.8rem;cursor:pointer;font-family:inherit}.btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}.btn.sm{padding:.34rem .6rem;font-size:.74rem}
+  .twrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.82rem;min-width:600px}
+  thead th{text-align:left;font-size:.64rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:.6rem .9rem;border-bottom:1px solid var(--line);white-space:nowrap}
+  tbody td{padding:.58rem .9rem;border-bottom:1px solid var(--line)}tbody tr:hover{background:var(--surface-2)}tbody tr:last-child td{border-bottom:none}
+  .pill{display:inline-flex;align-items:center;gap:.32rem;border-radius:999px;padding:.13rem .55rem;font-size:.7rem;font-weight:700;white-space:nowrap}.pill .dot{width:6px;height:6px;border-radius:50%}
+  .p-ok{background:var(--ok-s);color:var(--ok)}.p-ok .dot{background:var(--ok)}.p-warn{background:var(--warn-s);color:var(--warn)}.p-warn .dot{background:var(--warn)}.p-bad{background:var(--bad-s);color:var(--bad)}.p-bad .dot{background:var(--bad)}.p-info{background:var(--info-s);color:var(--info)}.p-info .dot{background:var(--info)}
+  .batt{display:inline-flex;align-items:center;gap:.4rem}.batt .bar{width:44px;height:7px;border-radius:4px;background:var(--line);overflow:hidden}.batt .bar i{display:block;height:100%}
+  .toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;padding:.85rem 1rem;border-bottom:1px solid var(--line)}
+  .chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:.3rem .7rem;font-size:.74rem;font-weight:700;color:var(--muted);cursor:pointer}.chip.on{background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
+  .iconbtn{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:.75rem}.act{display:inline-flex;gap:.3rem}
+  .form{display:grid;gap:.85rem;max-width:560px}.fld label{display:block;font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:.25rem;text-transform:uppercase;letter-spacing:.04em}.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:.5rem .7rem;font-size:.85rem;color:var(--ink);font-family:inherit}.two{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+  .tog{display:flex;align-items:center;justify-content:space-between;padding:.55rem .8rem;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);font-size:.82rem;font-weight:600}.sw{width:34px;height:19px;border-radius:99px;background:var(--line);position:relative;flex:none}.sw.on{background:var(--primary)}.sw::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff}.sw.on::after{left:17px}
+  .tabs{display:flex;gap:.3rem;border-bottom:1px solid var(--line);padding:0 1rem;flex-wrap:wrap}.tabs a{padding:.6rem .8rem;font-size:.82rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent}.tabs a.on{color:var(--primary);border-bottom-color:var(--primary)}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:.5rem 1rem;padding:1.1rem 1.2rem;font-size:.85rem}.kv .k{color:var(--muted);font-weight:600}
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}@media(max-width:1000px){.board{grid-template-columns:repeat(2,1fr)}}.col{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:.7rem}.col h4{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.6rem;display:flex;justify-content:space-between}.tk{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:.6rem .7rem;margin-bottom:.5rem;font-size:.8rem;box-shadow:var(--shadow)}.tk .m{color:var(--muted);font-size:.72rem;margin-top:.2rem}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cal .h{font-size:.66rem;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;padding:.3rem}.cal .day{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-height:74px;padding:.35rem;font-size:.72rem}.cal .day .n{color:var(--muted);font-weight:700}.cal .ev{background:var(--primary-soft);color:var(--primary);border-radius:5px;padding:.1rem .3rem;font-size:.66rem;font-weight:700;margin-top:.2rem}
+  #map{height:440px;border-radius:0 0 13px 13px;overflow:hidden}
+  .mpin{width:24px;height:24px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 7px rgba(0,0,0,.3);border:2px solid #fff}.mpin span{transform:rotate(-45deg);color:#fff;font-size:.68rem}
+  .sectitle{font-size:.9rem;font-weight:750;margin:0 0 .5rem}.muted{color:var(--muted)}.note{font-size:.76rem;color:var(--muted)}
+  .banner{background:linear-gradient(90deg,var(--primary),var(--primary-2));color:#fff;border-radius:12px;padding:.7rem 1.1rem;font-size:.8rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:.6rem}
+  .sub a.on{background:linear-gradient(90deg,color-mix(in srgb,var(--primary) 16%,transparent),transparent)}
+  .accfab{position:fixed;right:1.2rem;bottom:1.2rem;background:#0D1B3E;border:1px solid #1e2c49;border-radius:16px;padding:.65rem .85rem;box-shadow:0 12px 34px rgba(15,26,46,.28);z-index:999}
+  .accfab .lbl{color:#8ea0c6;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem}
+  .accfab .dots{display:flex;gap:.5rem}
+  .accfab button{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+  .accfab button.on{border-color:#fff;box-shadow:0 0 0 2px #0D1B3E inset}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side"><div class="brand"><span class="b">⚡</span> MOTRIX <small>OPERATOR PANEL</small></div><div id="nav"></div></aside>
+  <div class="main">
+    <div class="top">
+      <div><div class="crumb" id="crumb">Motrix · Kayseri</div><h1 id="ptitle">Dashboard</h1></div>
+      <div class="sp"></div>
+      <input class="search" placeholder="Suche…">
+      <div class="city"><span class="dot"></span> Kayseri ▾</div>
+      <div class="langdd" id="langdd"><button class="langtrig" id="langtrig"><span id="langflag">🇩🇪</span><span id="langname">Deutsch</span><span class="ca">▾</span></button>
+        <div class="langmenu" id="langmenu"><button data-l="de" class="on">🇩🇪 Deutsch</button><button data-l="en">🇬🇧 English</button><button data-l="tr">🇹🇷 Türkçe</button></div></div>
+      <div class="av">MK</div>
+    </div>
+    <div class="content" id="view"></div>
+  </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ============ DATA MODEL: 14 modules · ~180 pages ============ */
+const MODULES=[
+ {id:"dash",ic:"▦",name:"Dashboard",pages:[["dash","Fleet Dashboard","dashboard"],["dash-live","Live-Ops-Snapshot","dashboard"],["dash-alerts","Alerts / Radar","list"],["dash-rev","Revenue-Snapshot","dashboard"],["dash-health","Ops-Health","dashboard"],["dash-saved","Saved-Views","list"]]},
+ {id:"veh",ic:"🚲",name:"Vehicles / Fleet",pages:[["veh","Vehicle-Liste","list"],["veh-det","Vehicle-Detail","detail"],["veh-new","Vehicle Create/Edit","form"],["veh-imp","Bulk-Import / Provisioning","form"],["veh-types","Vehicle-Types","list"],["veh-type-new","Type Create","form"],["iot","IoT-Module","list"],["iot-det","IoT-Detail","detail"],["iot-assign","IoT-Assign","form"],["veh-fw","Firmware / OTA","list"],["veh-batt","Battery & Charging","dashboard"],["veh-cmd","Command-Console","form"],["veh-attr","Attribute-Groups","list"],["veh-cards","Vehicle-Cards (RFID)","list"]]},
+ {id:"map",ic:"🗺️",name:"Live-Map",pages:[["map","Live-Map","map"]]},
+ {id:"geo",ic:"⬡",name:"Geofences",pages:[["geo","Zonen-Map/Editor","map"],["geo-list","Zonen-Liste","list"],["geo-new","Zone-Create","form"],["geo-types","Area-Types","list"],["geo-sim","Zone-Simulation","map"],["st","Stations","list"],["st-new","Station-Create","form"],["st-slots","Physical-Stations/Slots","list"]]},
+ {id:"rides",ic:"↻",name:"Rides / Rentals",pages:[["active","Active-Rides","list"],["rides","Ride-History","list"],["ride-det","Ride-Detail","detail"],["book","Bookings","list"],["book-cal","Booking-Kalender","calendar"],["book-new","Booking-Create","form"],["disp","Disputes","list"],["disp-det","Dispute-Detail","detail"],["refunds","Refunds","list"],["add","Rental-Additions","list"]]},
+ {id:"users",ic:"👤",name:"Customers / Users",pages:[["users","Rider-Liste","list"],["user-det","Rider-Detail","detail"],["user-new","Rider Create/Edit","form"],["kyc","KYC / Verification-Queue","list"],["kyc-media","Media-Review","detail"],["idcards","Identity-Cards (RFID)","list"],["biz","Business-Accounts","list"],["biz-det","Business-Detail","detail"],["blk","Blacklist / Risk","list"]]},
+ {id:"pricing",ic:"₺",name:"Pricing",pages:[["pricing","Pricing-Bundles","list"],["price-det","Bundle-Detail/Versionen","detail"],["price-new","Bundle Create/Edit","form"],["price-calc","Pricing-Calculator","form"],["price-sim","Pricing-Simulator","form"],["packages","Packages","list"],["subs","Subscriptions","list"]]},
+ {id:"bill",ic:"🧾",name:"Billing & Payments",pages:[["txns","Transactions","list"],["wallets","Wallets/Balances","list"],["inv","Invoices","list"],["inv-det","Invoice-Detail","detail"],["inv-new","Invoice-Create","form"],["coll","Collections/Dunning","list"],["fines","Fines/Penalties","list"],["payouts","Payouts/Settlement","list"],["pgs","Payment-Gateways (ZeroPay)","form"],["revc","Revenue-Centers","list"],["efatura","e-Fatura / Uyumsoft [TR]","form"]]},
+ {id:"ops",ic:"🛠",name:"Field Operations",pages:[["tasks","Task-Board","board"],["tasks-list","Task-Liste","list"],["task-new","Task-Create","form"],["task-tpl","Task-Templates","list"],["rebal","Rebalancing","map"],["swap","Battery-Swap","list"],["maint","Maintenance-Tickets","list"],["maint-det","Ticket-Detail","detail"],["dmg","Damage-Reports","list"],["workers","Service-Workers","list"],["routes","Routes/Dispatch","map"],["ware","Warehouse/Parts","list"]]},
+ {id:"reports",ic:"📊",name:"Reports & BI",pages:[["reports","Revenue-Reports","dashboard"],["util","Utilization","dashboard"],["heat","Heatmaps","map"],["insights","Insights","dashboard"],["timeline","Timeline","list"],["esg","CO₂ / ESG","dashboard"],["muni","Municipal-Transparency","dashboard"],["custom","Custom-Dashboards","dashboard"],["exports","Data-Exports","list"]]},
+ {id:"mkt",ic:"📣",name:"Marketing / CRM",pages:[["camp","Campaigns","list"],["push","Push-Create","form"],["banner","Banner-Ads","list"],["banner-new","Banner-Create","form"],["email","Email/SMS-Campaign","form"],["promo","Promotions/Vouchers","list"],["voucher-new","Voucher-Create","form"],["referral","Referral-Programm","dashboard"],["loyalty","Loyalty/Rewards","list"],["nchan","Notification-Channels","list"],["content","In-App-Content/Tutorials","list"]]},
+ {id:"sup",ic:"💬",name:"Support & Safety",pages:[["tickets","Ticket-Inbox","list"],["ticket-det","Ticket-Detail","detail"],["sup-disp","Disputes","list"],["lost","Lost/Stolen-Recovery","map"],["safety","Safety-Events","list"],["fraud","Abuse/Fraud-Flags","list"],["comm","Community-Reports","list"],["issues","Issues","list"],["sos","SOS/Emergency-Log","list"]]},
+ {id:"comp",ic:"🏛",name:"Compliance / City",pages:[["gbfs","GBFS-Feeds","form"],["mds","MDS-Feeds","form"],["policy","Policy-Management","list"],["permits","Permits/Caps","list"],["munirep","Municipal-Reporting","dashboard"],["audit","Audit-Log (KVKK)","list"],["terms","Terms&Conditions","list"],["privacy","Data/Privacy","form"]]},
+ {id:"wl",ic:"🏷",name:"White-Label / Tenants",pages:[["tenants","Tenants/Städte","list"],["tenant-det","Tenant-Detail","detail"],["brand","Branding/Theme","form"],["flags","Feature-Flags/Settings","list"],["appcfg","App-Configuration","form"],["i18n","Message/Translation-Mgmt","list"],["maas","MaaS-Clients","list"]]},
+ {id:"admin",ic:"⚙",name:"Administration",pages:[["staff","Staff/Team","list"],["staff-det","Staff-Detail","detail"],["invite","Invite","form"],["roles","Roles & Permissions","list"],["role-new","Role-Create","form"],["apikeys","API-Keys","list"],["webhooks","Webhooks","list"],["integr","Integrations","list"],["settings","General-Settings","form"],["profile","My-Profile / 2FA","form"]]}
+];
+
+/* ============ sample data ============ */
+const IM=(i)=>"8632350803"+String(10+i).padStart(5,'0');
+const NAMES=["Ahmet Y.","Elif K.","Mehmet T.","Zeynep A.","Can D.","Selin B.","Emre K.","Fatma S.","Burak Ö.","Deniz A.","Ayşe M.","Ali R."];
+const STAT=[["ok","available"],["info","on-trip"],["ok","available"],["info","on-trip"],["warn","maintenance"],["ok","available"],["bad","offline"],["ok","available"]];
+const FLEET=Array.from({length:12},(_,i)=>({qr:1769075161+i,imei:IM(i),model:"G7",batt:[80,74,91,63,18,88,0,55,72,44,96,31][i],st:STAT[i%8]}));
+
+/* ============ pattern renderers ============ */
+const battBar=b=>{const c=b<20?'var(--bad)':b<50?'var(--warn)':'var(--ok)';return `<span class="batt"><span class="bar"><i style="width:${b}%;background:${c}"></i></span>${b}%</span>`;};
+const pill=(s,t)=>`<span class="pill p-${s}"><span class="dot"></span>${t}</span>`;
+
+const arrow=d=>/^-/.test(d)?`<span class="d down">▼ ${d.slice(1)}</span>`:`<span class="d up">▲ ${d.replace('+','')}</span>`;
+function pDashboard(p){const cfg=CFG[p[0]]||{};
+  const k=cfg.k||[["Bikes online","56","+2"],["Aktive Fahrten","8","+3"],["Umsatz heute","₺2.480","+12%"],["Ø Batterie","76%","-4%"],["Auslastung","62%","+8%"]];
+  return `<div class="grid kpis">${k.map(x=>`<div class="card kpi"><span class="l">${x[0]}</span><span class="n">${x[1]}</span>${x[2]?arrow(x[2]):''}</div>`).join('')}</div>
+  <div class="row r-2"><div class="card"><div class="ch"><h3>${p[1]} · Verlauf</h3></div><div class="pad" data-chart="rev"></div></div>
+  <div class="card"><div class="ch"><h3>Verteilung</h3></div><div class="pad" data-chart="bar"></div></div></div>
+  <div class="row"><div class="card"><div class="ch"><h3>Letzte Aktivität</h3></div>${tableFleet(6)}</div></div>`;
+}
+function tableFleet(n){return `<div class="twrap"><table><thead><tr><th>QR</th><th>IMEI</th><th>Batterie</th><th>Status</th><th>Actions</th></tr></thead><tbody>${FLEET.slice(0,n).map(v=>`<tr><td class="mono">${v.qr}</td><td class="mono">${v.imei}</td><td>${battBar(v.batt)}</td><td>${pill(v.st[0],v.st[1])}</td><td class="act"><button class="iconbtn">📍</button><button class="iconbtn">🔓</button></td></tr>`).join('')}</tbody></table></div>`;}
+function genCell(col,i){const c=col.toLowerCase();
+  if(/actions?/.test(c))return `<span class="act"><button class="iconbtn">✎</button><button class="iconbtn">⋯</button></span>`;
+  if(/status|aktiv$/.test(c))return pill(['ok','info','warn','ok','bad'][i%5],['aktiv','offen','wartet','aktiv','fehler'][i%5]);
+  if(/batterie|battery/.test(c))return battBar([80,64,18,91,55,33,72,88][i%8]);
+  if(/imei/.test(c))return `<span class="mono">${IM(i)}</span>`;
+  if(/iccid/.test(c))return `<span class="mono">8990011${String(100000+i).slice(-6)}</span>`;
+  if(/^key$|api.?key|schlüssel/.test(c))return `<span class="mono">mtx_${(1000+i).toString(16)}…${i}f2</span>`;
+  if(/id|nr|nummer|ticket|ride|dispute|refund|export|flag|issue|sos|payout|permit|policy|banner|kampagne|code|slot/.test(c))return `<span class="mono">#${(2000+i*7)}</span>`;
+  if(/datum|zeit|erstellt|aktualisiert|login|start|fällig|seit|gültig/.test(c))return `<span class="muted">2026-08-${((10+i)%27)+1}</span>`;
+  if(/betrag|preis|umsatz|saldo|wallet|guthaben|offen|wert|₺/.test(c))return `<b>₺${[42,120,8,64,15,90,33,7][i%8]},00</b>`;
+  if(/prozent|anteil|match|rate|klicks|einlösung|punkte|konvert/.test(c))return `${[92,44,73,64,15,88][i%6]}${/klicks|punkte|einlösung/.test(c)?'':'%'}`;
+  if(/rider|kunde|name|nutzer|techniker|empfänger|melder|firma|mitglied/.test(c))return NAMES[i%NAMES.length];
+  if(/signal/.test(c))return `${20+i%12}/31`;
+  if(/priorität|schwere|risk|prio/.test(c))return pill(['bad','warn','ok'][i%3],['hoch','mittel','niedrig'][i%3]);
+  if(/typ|kategorie|kanal|methode|format|scope|version|stufe|plan|sprache/.test(c))return ["Standard","Premium","System","Auto","v3"][i%5];
+  if(/zone|standort|ort|stadt|platzierung|geltung/.test(c))return ["Millet B.","Talas","Kampüs","Cumhuriyet"][i%4];
+  if(/de$|en$|tr$/.test(c))return ["Fahrt","Ride","Sürüş"][/de$/.test(c)?0:/en$/.test(c)?1:2];
+  return `${col.split('/')[0]} ${i+1}`;
+}
+function pList(p){const cfg=CFG[p[0]];
+  if(p[0]==='veh'){const cols=["QR","IMEI","Modell","Batterie","Status","Zone","Actions"];
+    const rows=FLEET.map(v=>`<tr><td class="mono">${v.qr}</td><td class="mono">${v.imei}</td><td>G7</td><td>${battBar(v.batt)}</td><td>${pill(v.st[0],v.st[1])}</td><td>Millet B.</td><td class="act"><button class="iconbtn">📍</button><button class="iconbtn">🔓</button><button class="iconbtn">⚑</button></td></tr>`).join('');
+    return listShell(cols,rows);}
+  if(p[0]==='users'){const cols=["Rider","Telefon","Wallet","KYC","Fahrten","Flags"];
+    const rows=NAMES.slice(0,8).map((n,i)=>`<tr><td>${n}</td><td class="mono">+90 5${30+i}•••</td><td><b>₺${[42,120,8,64,15,0,88,23][i]}</b></td><td>${pill(['ok','ok','warn','ok','ok','bad','ok','warn'][i],['verified','verified','pending','verified','verified','flagged','verified','pending'][i])}</td><td>${[92,44,3,64,15,7,88,23][i]}</td><td>${i===5?pill('bad','risk'):'—'}</td></tr>`).join('');
+    return listShell(cols,rows);}
+  if(p[0]==='rides'){const cols=["Ride","Rider","Bike","Dauer","Preis","Status"];
+    const rows=NAMES.map((n,i)=>{const d=4+(i*7)%22,f=5+d*3;return `<tr><td class="mono">R-48${20-i}</td><td>${n}</td><td class="mono">${IM(i%8)}</td><td>${d} min</td><td><b>₺${f},00</b></td><td>${pill('ok','closed')}</td></tr>`;}).join('');
+    return listShell(cols,rows);}
+  const cols=cfg?cfg.c:["ID","Name","Typ","Status","Aktualisiert","Actions"];
+  const rows=Array.from({length:8},(_,i)=>`<tr>${cols.map(c=>`<td>${genCell(c,i)}</td>`).join('')}</tr>`).join('');
+  return listShell(cols,rows);
+}
+function listShell(cols,rows){return `<div class="card"><div class="toolbar"><input class="search" placeholder="Suche…" style="min-width:200px"><span class="chip on">Alle</span><span class="chip">Aktiv</span><span class="chip">Filter ▾</span><div style="flex:1"></div><button class="btn ghost sm">⤓ Export</button><button class="btn sm">+ Neu</button></div>
+  <div class="twrap"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;}
+function pDetail(p){const cfg=CFG[p[0]]||{};
+  const tabs=cfg.tabs||["Übersicht","Historie","Aktivität","Abrechnung","Notizen"];
+  const kv=cfg.kv||[["ID",`<span class="mono">#48210</span>`],["Status",pill('ok','aktiv')],["Erstellt","2026-08-14 · 09:41"],["Zugeordnet","Kayseri · Millet Bahçeleri"]];
+  return `<div class="card"><div class="ch"><h3>${p[1]}</h3><div><button class="btn ghost sm">Bearbeiten</button> <button class="btn sm">Aktion</button></div></div>
+  <div class="tabs" id="dtabs">${tabs.map((t,i)=>`<a class="${i?'':'on'}">${t}</a>`).join('')}</div>
+  <div class="kv">${kv.map(r=>`<div class="k">${r[0]}</div><div>${r[1]}</div>`).join('')}</div></div>`;
+}
+function genField(f){const label=f[0],val=f[1]===undefined?'':f[1];
+  if(val==='file')return `<div class="fld"><label>${label}</label><input placeholder="Datei wählen… (CSV / XLSX / PNG)"></div>`;
+  if(val==='textarea')return `<div class="fld"><label>${label}</label><textarea rows="2"></textarea></div>`;
+  if(typeof val==='string'&&val.startsWith('select:')){const o=val.slice(7).split('|');return `<div class="fld"><label>${label}</label><select>${o.map(x=>`<option>${x}</option>`).join('')}</select></div>`;}
+  return `<div class="fld"><label>${label}</label><input value="${val}"></div>`;
+}
+function pForm(p){const cfg=CFG[p[0]]||{};
+  const fields=cfg.f||[["Tenant","select:Kayseri|Gaziantep|Trabzon"],["Name / Bezeichnung",p[1]],["Beschreibung","textarea"]];
+  const togs=cfg.t||["Aktiviert","Sichtbar in App"];
+  const pairs=[];for(let i=0;i<fields.length;i+=2){pairs.push(fields.slice(i,i+2));}
+  const body=pairs.map(pr=>pr.length===2&&pr[0][1]!=='textarea'&&pr[1][1]!=='textarea'?`<div class="two">${pr.map(genField).join('')}</div>`:pr.map(genField).join('')).join('');
+  return `<div class="row r-2" style="margin-top:0"><div class="card pad"><div class="sectitle">${p[1]}</div>
+  <div class="form" style="max-width:none">${body}${togs.map((t,i)=>`<div class="tog"><span>${t}</span><span class="sw${i===0?' on':''}"></span></div>`).join('')}
+  <div class="two"><button class="btn ghost">Entwurf</button><button class="btn">Speichern</button></div></div></div>
+  <div class="card pad"><div class="sectitle">Info</div><div class="note">Konfiguration „${p[1]}" — pro Tenant konfigurierbar, an das goUrban-Ressourcenmodell verdrahtet (Settings-as-Flags).</div><div class="banner" style="margin-top:1rem">⚙ ${p[1]}</div></div></div>`;
+}
+function pMap(p){return `<div class="card"><div class="ch"><h3>${p[1]} · Kayseri</h3><div><span class="chip on">Alle 56</span> <span class="chip">Available</span> <span class="chip">On-Trip</span></div></div><div id="map"></div></div>`;}
+function pBoard(p){const cols=["Backlog","Zugewiesen","In Arbeit","Erledigt"];const t=["Battery-Swap #12","Rebalance Millet B.","Repair 863…854","Deploy 5 bikes","Inspect brake"];
+  return `<div class="board">${cols.map((c,ci)=>`<div class="col"><h4>${c} <span>${(ci+1)}</span></h4>${t.slice(0,ci+1).map(x=>`<div class="tk">${x}<div class="m">Ali R. · heute</div></div>`).join('')}</div>`).join('')}</div>`;}
+function pCalendar(p){const days=["Mo","Di","Mi","Do","Fr","Sa","So"];let h=days.map(d=>`<div class="h">${d}</div>`).join('');
+  for(let i=1;i<=28;i++){h+=`<div class="day"><span class="n">${i}</span>${i%5===0?'<div class="ev">3 Buchungen</div>':''}${i%7===0?'<div class="ev">Wartung</div>':''}</div>`;}
+  return `<div class="card pad"><div class="sectitle">${p[1]} · August 2026</div><div class="cal">${h}</div></div>`;}
+
+const RENDER={dashboard:pDashboard,list:pList,detail:pDetail,form:pForm,map:pMap,board:pBoard,calendar:pCalendar};
+
+/* ===== CUSTOM rich renderers (override generic patterns) ===== */
+const kvg=rows=>`<div class="kv">${rows.map(r=>`<div class="k">${r[0]}</div><div>${r[1]}</div>`).join('')}</div>`;
+function cVehDet(p){const im="863235080301854",qr="1769075161";
+ const tb=(id,l,on)=>`<a data-tab="${id}"${on?' class="on"':''}>${l}</a>`;const pn=(id,h,on)=>`<div data-panel="${id}" style="${on?'':'display:none'}">${h}</div>`;
+ return `<div class="card"><div class="ch"><div><h3>Bike ${im.slice(-6)} · G7</h3><span class="note mono">${im} · QR ${qr}</span></div><div class="act">${pill('ok','available')} <button class="btn ghost sm">🔔 Locate</button><button class="btn sm">🔓 Unlock</button></div></div>
+ <div class="tabs" id="dtabs">${tb('ov','Übersicht',1)}${tb('tel','Telemetrie')}${tb('cmd','Command-Log')}${tb('mnt','Wartung')}${tb('dmg','Schäden')}${tb('loc','Standort')}${tb('log','Event-Log')}</div>
+ <div id="dpanels">
+  ${pn('ov',kvg([["IMEI",`<span class="mono">${im}</span>`],["QR-Nr",qr],["MAC","8C:59:DD:10:6C:5A"],["Modell","G7 (neu)"],["Firmware","v1.3.5"],["Tenant / Zone","Kayseri · Millet Bahçeleri"],["Batterie",battBar(80)],["Status",pill('ok','available')],["Last seen","vor 12 s"]]),1)}
+  ${pn('tel',`<div class="grid kpis" style="padding:1rem 1.2rem">${[["Batterie","80%"],["Speed","0 km/h"],["Signal","28/31"],["Gesamt-km","342 km"],["Trip-km","0,0 km"],["Ladung","nein"]].map(x=>`<div class="card kpi"><span class="l">${x[0]}</span><span class="n" style="font-size:1.3rem">${x[1]}</span></div>`).join('')}</div><div class="pad"><div class="sectitle">Batterie · 24 h</div><div data-chart="rev"></div></div>`)}
+  ${pn('cmd',`<div class="twrap"><table><thead><tr><th>Zeit</th><th>Command</th><th>Payload</th><th>Ergebnis</th></tr></thead><tbody>${[["09:41:02","R0 · Unlock-Request","op=0, key=77","KEY 77"],["09:41:03","L0 · Unlock","key=77","OK · ride_started"],["09:48:30","S7 · Speed-Mode","mode=1 (low)","OK · Slow-Zone"],["10:02:11","V0 · Audio","code=1 (out-of-range)","OK"],["10:05:44","L1 · Lock","key=77","OK · 24 min"]].map(r=>`<tr><td class="mono">${r[0]}</td><td class="mono">${r[1]}</td><td class="mono muted">${r[2]}</td><td>${pill('ok',r[3])}</td></tr>`).join('')}</tbody></table></div>`)}
+  ${pn('mnt',`<div class="toolbar"><div style="flex:1"></div><button class="btn sm">+ Ticket</button></div><div class="twrap"><table><thead><tr><th>Datum</th><th>Typ</th><th>Teil</th><th>Techniker</th><th>Status</th></tr></thead><tbody>${[["2026-08-10","Brake-Check","—","Ali R.","erledigt"],["2026-07-22","Battery-Swap","48V-Pack","Emre K.","erledigt"]].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${pill('ok',r[4])}</td></tr>`).join('')}</tbody></table></div>`)}
+  ${pn('dmg',`<div class="pad note">Keine offenen Schäden. Letzte End-of-Ride-Foto-Prüfung: bestanden (2026-08-14).</div>`)}
+  ${pn('loc',`<div id="map"></div>`)}
+  ${pn('log',`<div class="pad" style="font-family:ui-monospace;font-size:.76rem;color:var(--muted);line-height:1.95">*SCOR,OM,${im},H0,412,80,28# <span style="color:var(--ok)">heartbeat</span><br>*SCOR,OM,${im},S6,80,2,0,0,372,0,1,28,0,2204# telemetry<br>*SCOR,OM,${im},D0,A,3843.35,N,03528.92,E# GPS→WGS84<br>*SCOR,OM,${im},S1,8# <span style="color:var(--info)">event: in-zone</span><br>*SCOR,OM,${im},H0,412,80,28# heartbeat</div>`)}
+ </div></div>`;}
+function cGeo(p){return `<div class="row r-2" style="margin-top:0"><div class="card"><div class="ch"><h3>Zonen-Editor · Kayseri</h3><span class="chip on">Satellit ▾</span></div><div id="map"></div></div>
+ <div class="card pad"><div class="sectitle">Neue Zone anlegen</div><div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem"><span class="chip on">Service</span><span class="chip">Parking</span><span class="chip">No-Ride</span><span class="chip">Slow</span><span class="chip">Custom</span></div>
+ <div class="form" style="max-width:none"><div class="fld"><label>Name</label><input value="Millet Bahçeleri"></div><div class="fld"><label>Tenant / Fleet</label><select><option>Kayseri</option><option>Gaziantep</option><option>Trabzon</option></select></div>
+ <div class="sectitle" style="margin-top:.3rem;font-size:.78rem">Bei Verlassen der Zone:</div><div class="tog"><span>⚙ Speed drosseln (S7)</span><span class="sw on"></span></div><div class="tog"><span>🔊 Alarm-Ton (V0)</span><span class="sw"></span></div><div class="tog"><span>🔒 Pause & Lock-on-Stop</span><span class="sw on"></span></div>
+ <button class="btn">Zone speichern</button><span class="note">Enforcement über den getesteten Gateway (S7/V0). Kein Hard-Lock in Fahrt.</span></div></div></div>`;}
+function cCmd(p){return `<div class="row r-2" style="margin-top:0"><div class="card pad"><div class="sectitle">Command-Console</div>
+ <div class="form"><div class="fld"><label>Ziel-Bike (IMEI)</label><select>${FLEET.map(v=>`<option>${v.imei}</option>`).join('')}</select></div>
+ <div class="fld"><label>Command</label><select><option>Unlock (R0→L0)</option><option>Lock (R0→L1)</option><option>Set Speed-Mode (S7)</option><option>Audio-Alert (V0)</option><option>Set BLE-Key (K0)</option><option>Reboot</option><option>Request State (S6)</option></select></div>
+ <div class="two"><div class="fld"><label>Parameter</label><input value="mode=low"></div><div class="fld"><label>User-ID</label><input value="1234"></div></div>
+ <button class="btn">Senden</button><span class="note">Safe-Actuation: Immobilize nur bei Speed 0. Async-Confirm über Rück-Event.</span></div></div>
+ <div class="card"><div class="ch"><h3>Console-Output</h3></div><div class="pad" style="font-family:ui-monospace;font-size:.76rem;line-height:1.95;color:var(--muted)">&gt; Unlock 863235080301854<br><span style="color:var(--info)">→ *SCOS,OM,…,R0,0,20,1234,…#</span><br><span style="color:var(--ok)">← R0 KEY 77</span><br><span style="color:var(--info)">→ *SCOS,OM,…,L0,77,1234#</span><br><span style="color:var(--ok)">← L0 OK · ride_started ✓ (exakt-einmal gebucht)</span></div></div></div>`;}
+function cActive(p){return `<div class="grid kpis" style="grid-template-columns:repeat(3,1fr)"><div class="card kpi"><span class="l">Aktive Fahrten</span><span class="n">8</span><span class="d up">live</span></div><div class="card kpi"><span class="l">Ø Dauer</span><span class="n">14 min</span></div><div class="card kpi"><span class="l">Laufender Umsatz</span><span class="n">₺312</span></div></div>
+ <div class="row"><div class="card"><div class="ch"><h3>Fahrten in Echtzeit</h3>${pill('info','live')}</div><div class="twrap"><table><thead><tr><th>Ride</th><th>Rider</th><th>Bike</th><th>Start</th><th>Dauer</th><th>Preis (laufend)</th><th>Zone</th><th>Status</th></tr></thead><tbody>${[["R-4818","Zeynep A.",IM(3),"09:41","19 min","₺62,00","Millet B.","info","riding"],["R-4822","Can D.",IM(4),"09:52","8 min","₺29,00","Millet B.","info","riding"],["R-4823","Selin B.",IM(5),"09:55","5 min","₺20,00","Slow-Zone","warn","slow-zone"],["R-4824","Emre K.",IM(6),"09:58","2 min","₺11,00","Millet B.","info","riding"]].map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td class="mono">${r[2]}</td><td class="muted">${r[3]}</td><td>${r[4]}</td><td><b>${r[5]}</b></td><td>${r[6]}</td><td>${pill(r[7],r[8])}</td></tr>`).join('')}</tbody></table></div></div></div>`;}
+function cUserDet(p){const tb=(id,l,on)=>`<a data-tab="${id}"${on?' class="on"':''}>${l}</a>`;const pnl=(id,h,on)=>`<div data-panel="${id}" style="${on?'':'display:none'}">${h}</div>`;
+ return `<div class="card"><div class="ch"><div><h3>Zeynep A.</h3><span class="note mono">Rider #1042 · +90 531 ••• 42</span></div><div class="act">${pill('ok','verified')} <button class="btn ghost sm">Nachricht</button><button class="btn sm">Wallet aufladen</button></div></div>
+ <div class="tabs" id="dtabs">${tb('d','Details',1)}${tb('t','Fahrten')}${tb('w','Wallet & Zahlungen')}${tb('p','Pässe & Promos')}${tb('v','Verifikation')}${tb('tl','Timeline')}${tb('n','Notizen')}</div>
+ <div id="dpanels">
+  ${pnl('d',kvg([["Name","Zeynep A."],["Telefon",`<span class="mono">+90 531 ••• 42</span>`],["E-Mail","zeynep@…"],["Registriert","2026-07-02"],["Wallet","<b>₺42,00</b>"],["KYC",pill('ok','verified')],["Fahrten gesamt","92"],["Status",pill('ok','aktiv')]]),1)}
+  ${pnl('t',`<div class="twrap"><table><thead><tr><th>Ride</th><th>Datum</th><th>Bike</th><th>Dauer</th><th>Preis</th></tr></thead><tbody>${[["R-4818","2026-08-14",IM(3),"19 min","₺62"],["R-4791","2026-08-12",IM(1),"8 min","₺29"],["R-4760","2026-08-09",IM(5),"24 min","₺75"]].map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td class="mono">${r[2]}</td><td>${r[3]}</td><td><b>${r[4]}</b></td></tr>`).join('')}</tbody></table></div>`)}
+  ${pnl('w',`<div class="grid kpis" style="padding:1rem 1.2rem"><div class="card kpi"><span class="l">Wallet-Saldo</span><span class="n">₺42,00</span></div><div class="card kpi"><span class="l">Lifetime-Spend</span><span class="n">₺1.240</span></div><div class="card kpi"><span class="l">Zahlungsmittel</span><span class="n" style="font-size:.95rem">Visa ••42 · ZeroPay</span></div></div>`)}
+  ${pnl('p',`<div class="pad note">Aktiver Pass: keiner. Promo „ILK5" eingelöst (2026-07-02).</div>`)}
+  ${pnl('v',kvg([["ID-Typ","T.C. Kimlik"],["Status",pill('ok','verified')],["Geprüft am","2026-07-02"],["Methode","NFC + Selfie-Match (96%)"]]))}
+  ${pnl('tl',`<div class="pad note" style="line-height:2">2026-08-14 · Ride R-4818 beendet<br>2026-08-10 · Wallet +₺50 (ZeroPay)<br>2026-07-02 · KYC verifiziert<br>2026-07-02 · Registrierung</div>`)}
+  ${pnl('n',`<div class="pad note">Keine Notizen.</div>`)}
+ </div></div>`;}
+function cKyc(p){return `<div class="card"><div class="toolbar"><span class="chip on">Pending 7</span><span class="chip">Approved</span><span class="chip">Rejected</span><div style="flex:1"></div><button class="btn ghost sm">Auto-Match ▾</button></div>
+ <div class="twrap"><table><thead><tr><th>Rider</th><th>Eingereicht</th><th>ID-Typ</th><th>NFC</th><th>Selfie-Match</th><th>Risk</th><th>Aktion</th></tr></thead><tbody>
+ ${[["Mehmet T.","vor 4 min","T.C. Kimlik","ok","96%","niedrig"],["Fatma S.","vor 18 min","Pasaport","warn","74%","mittel"],["Burak Ö.","vor 32 min","T.C. Kimlik","ok","91%","niedrig"],["Deniz A.","vor 1 h","Ehliyet","bad","41%","hoch"]].map(r=>`<tr><td>${r[0]}</td><td class="muted">${r[1]}</td><td>${r[2]}</td><td>${pill(r[3],r[3]==='ok'?'lesbar':r[3]==='warn'?'unscharf':'fehlt')}</td><td><b>${r[4]}</b></td><td>${pill(r[5]==='niedrig'?'ok':r[5]==='mittel'?'warn':'bad',r[5])}</td><td class="act"><button class="btn sm">✓</button> <button class="btn ghost sm">✕</button></td></tr>`).join('')}</tbody></table></div></div>`;}
+function cPriceNew(p){return `<div class="row r-2" style="margin-top:0"><div class="card pad"><div class="sectitle">Tarif-Bundle · Kayseri Standard</div>
+ <div class="form" style="max-width:none"><div class="two"><div class="fld"><label>Bundle-Name</label><input value="Kayseri Standard"></div><div class="fld"><label>Währung</label><select><option>TRY ₺</option><option>EUR €</option></select></div></div>
+ <div class="sectitle" style="font-size:.78rem;margin-top:.3rem">Tarif-Variablen (pro Tenant konfigurierbar)</div>
+ <div class="two"><div class="fld"><label>Unlock-Gebühr</label><input value="10,00 ₺"></div><div class="fld"><label>Preis / Minute</label><input value="2,50 ₺"></div></div>
+ <div class="two"><div class="fld"><label>Frei-Minuten</label><input value="0"></div><div class="fld"><label>Pause / Minute</label><input value="1,00 ₺"></div></div>
+ <div class="two"><div class="fld"><label>Max / Fahrt (Cap)</label><input value="150,00 ₺"></div><div class="fld"><label>Tages-Cap</label><input value="—"></div></div>
+ <div class="tog"><span>Mitgliedschaft (monatl. Flat)</span><span class="sw"></span></div><div class="tog"><span>Belediye-Rabatt (Student / 65+)</span><span class="sw on"></span></div>
+ <button class="btn">Bundle veröffentlichen</button><span class="note">1:1 an die getestete pricing.ts-Engine verdrahtet. Whitelabel-Betreiber definiert diese Werte selbst.</span></div></div>
+ <div class="card pad"><div class="sectitle">Beispiel-Rechnung</div><div class="kv" style="padding:0"><div class="k">Fahrt 14 min</div><div>10,00 + 14×2,50 = <b>45,00 ₺</b></div><div class="k">Fahrt 30 min</div><div>10,00 + 30×2,50 = <b>85,00 ₺</b></div><div class="k">Mit Cap</div><div>gedeckelt bei <b>150,00 ₺</b></div></div><div class="banner" style="margin-top:1rem">₺ Versioniert · A/B-fähig</div></div></div>`;}
+function cTasks(p){const cols=[["Backlog",["Rebalance Millet B. (12 Bikes)","Battery <20% · 3 Bikes","Repair 863…854 Bremse"]],["Zugewiesen",["Swap Batterien Zone-A","Inspect 5 Bikes"]],["In Arbeit",["Sammle offline 863…427","Reposition zum Hub"]],["Erledigt",["Deploy 8 Bikes ✓","Battery-Swap #12 ✓"]]];const w=['Ali R.','Emre K.','Deniz A.'];
+ return `<div class="toolbar card" style="margin-bottom:1rem;border-radius:13px"><span class="chip on">Alle Tasks</span><span class="chip">Battery</span><span class="chip">Repair</span><span class="chip">Rebalance</span><div style="flex:1"></div><button class="btn sm">+ Task</button></div>
+ <div class="board">${cols.map(c=>`<div class="col"><h4>${c[0]} <span>${c[1].length}</span></h4>${c[1].map((t,i)=>`<div class="tk">${t}<div class="m">${w[i%3]} · heute · ${c[0]}</div></div>`).join('')}</div>`).join('')}</div>`;}
+function cRebal(p){return `<div class="row r-2" style="margin-top:0"><div class="card"><div class="ch"><h3>Rebalancing · Kayseri</h3><span class="chip on">Supply / Demand ▾</span></div><div id="map"></div></div>
+ <div class="card pad"><div class="sectitle">Empfehlungen</div><div class="note" style="margin-bottom:.7rem">Auto-generiert aus Nachfrage-Heatmap + Batteriestand.</div>
+ ${[["Millet B. → Cumhuriyet Mh.","4 Bikes · Überangebot","warn"],["Depot → Talas Kampüs","6 Bikes · Nachfrage-Spitze 08:00","bad"],["Sammle 3 Low-Batt","<20% · Laden","info"]].map(r=>`<div class="tog" style="margin-bottom:.5rem;height:auto;align-items:flex-start"><span><b>${r[0]}</b><br><span class="note">${r[1]}</span></span>${pill(r[2],'Task')}</div>`).join('')}
+ <button class="btn" style="margin-top:.5rem">Als Tasks anlegen</button></div></div>`;}
+function cMaintDet(p){return `<div class="card"><div class="ch"><div><h3>Ticket #TK-2041 · Bremse</h3><span class="note mono">Bike 863…854 · Prio hoch</span></div><div class="act">${pill('warn','in Arbeit')} <button class="btn ghost sm">Zuweisen</button><button class="btn sm">Schließen</button></div></div>
+ <div class="kv"><div class="k">Fahrzeug</div><div class="mono">863235080301854</div><div class="k">Gemeldet</div><div>2026-08-22 · via End-of-Ride-Report</div><div class="k">Techniker</div><div>Ali R.</div><div class="k">Kategorie</div><div>Bremse / Sicherheit</div><div class="k">Teile</div><div>Bremsbelag vorne</div><div class="k">Status</div><div>${pill('warn','in Arbeit')}</div></div></div>`;}
+function cReports(p){const k=[["Umsatz (30 T)","₺74.200","18%"],["Fahrten (30 T)","9.840","12%"],["Ø Umsatz/Fahrt","₺7,54","5%"],["Aktive Rider","2.140","9%"],["Auslastung","62%","8%"]];
+ return `<div class="grid kpis">${k.map(x=>`<div class="card kpi"><span class="l">${x[0]}</span><span class="n">${x[1]}</span><span class="d up">▲ ${x[2]}</span></div>`).join('')}</div>
+ <div class="row r-2"><div class="card"><div class="ch"><h3>Umsatz · 30 Tage</h3></div><div class="pad" data-chart="rev"></div></div><div class="card"><div class="ch"><h3>Fahrten nach Stunde</h3></div><div class="pad" data-chart="bar"></div></div></div>
+ <div class="row r-3"><div class="card pad"><div class="sectitle">Top-Zonen</div><div class="kv" style="padding:0"><div class="k">Millet B.</div><div><b>3.120</b></div><div class="k">Talas</div><div><b>2.010</b></div><div class="k">Kampüs</div><div><b>1.740</b></div></div></div>
+ <div class="card pad"><div class="sectitle">Zahlungsart</div><div class="kv" style="padding:0"><div class="k">ZeroPay-Wallet</div><div><b>68%</b></div><div class="k">Kredit-Karte</div><div><b>27%</b></div><div class="k">Belediye-Kart</div><div><b>5%</b></div></div></div>
+ <div class="card pad"><div class="sectitle">Export</div><div class="note">CSV · XLSX · PDF · GBFS-Feed · Municipal-Report (KayBis)</div><button class="btn ghost sm" style="margin-top:.6rem">⤓ Report erzeugen</button></div></div>`;}
+function cEsg(p){const k=[["CO₂ eingespart","224 t/Jahr","≈4 t/Bike"],["km gefahren","1,42 Mio","—"],["Auto-Trips ersetzt","41.200","—"],["Bäume-Äquiv.","10.180","—"]];
+ return `<div class="grid kpis">${k.map(x=>`<div class="card kpi"><span class="l">${x[0]}</span><span class="n">${x[1]}</span><span class="d up">▲ ${x[2]}</span></div>`).join('')}</div><div class="row"><div class="card"><div class="ch"><h3>CO₂-Einsparung · monatlich</h3></div><div class="pad" data-chart="rev"></div></div></div>`;}
+function cMuni(p){const k=[["CO₂ (Jahr)","224 t","4 t/Bike"],["Auto-Fahrten ersetzt","41.200","—"],["Aktive Bürger","2.140","9%"],["Ø Fahrten/Tag","328","12%"],["Stadt-Abdeckung","62%","Ziel 80%"]];
+ return `<div class="banner">🏛 Municipal-Transparency · Kayseri Büyükşehir Belediyesi — Read-Only-Zugang für die Stadt</div>
+ <div class="grid kpis">${k.map(x=>`<div class="card kpi"><span class="l">${x[0]}</span><span class="n">${x[1]}</span><span class="d up">▲ ${x[2]}</span></div>`).join('')}</div>
+ <div class="row r-2"><div class="card"><div class="ch"><h3>Nutzung · Stadtteile</h3></div><div class="pad" data-chart="bar"></div></div><div class="card"><div class="ch"><h3>CO₂-Einsparung · Verlauf</h3></div><div class="pad" data-chart="rev"></div></div></div>
+ <div class="row"><div class="card pad"><div class="sectitle">Compliance & SLA</div><div class="kv" style="padding:0"><div class="k">KVKK-Datenresidenz</div><div>${pill('ok','TR On-Prem')}</div><div class="k">GBFS-Feed</div><div>${pill('ok','v3.0 live')}</div><div class="k">Uptime-SLA</div><div>${pill('ok','99,7%')}</div><div class="k">Fahrzeug-Cap</div><div>500 / 500 genehmigt</div></div></div></div>`;}
+function cHeat(p){return `<div class="card"><div class="ch"><h3>Nachfrage-Heatmap · Kayseri</h3><div><span class="chip on">Trip-Starts</span><span class="chip">Trip-Ends</span><span class="chip">08:00 ▾</span></div></div><div id="map"></div></div>`;}
+function cPgs(p){return `<div class="row r-2" style="margin-top:0"><div class="card pad"><div class="sectitle">Payment-Gateway · ZeroPay</div>
+ <div class="form" style="max-width:none"><div class="tog"><span><b>ZeroPay</b> · Wallet + Karte (primär)</span><span class="sw on"></span></div>
+ <div class="fld"><label>Merchant-ID</label><input value="ZP-KAYSERI-001"></div><div class="two"><div class="fld"><label>Environment</label><select><option>Production</option><option>Sandbox</option></select></div><div class="fld"><label>Webhook-URL</label><input value="https://api.motrix…/zeropay/hook"></div></div>
+ <div class="sectitle" style="font-size:.78rem">Weitere Provider</div><div class="tog"><span>iyzico (Fallback)</span><span class="sw"></span></div><div class="tog"><span>Belediye-Kart (Kentkart)</span><span class="sw on"></span></div>
+ <button class="btn">Speichern & Testen</button><span class="note">Wallet-Pre-Auth vor Unlock, Capture bei Ride-Ende. 3DS über ZeroPay.</span></div></div>
+ <div class="card pad"><div class="sectitle">Verbindung</div><div class="kv" style="padding:0"><div class="k">Status</div><div>${pill('ok','verbunden')}</div><div class="k">Letzte TX</div><div>vor 2 min · ₺45,00</div><div class="k">Erfolgsrate</div><div><b>99,2%</b></div><div class="k">Settlement</div><div>T+1 · TL-Konto</div></div><div class="banner" style="margin-top:1rem">🔗 ZeroPay = Zerokan-Synergie</div></div></div>`;}
+function cEfatura(p){return `<div class="row r-2" style="margin-top:0"><div class="card pad"><div class="sectitle">e-Fatura / e-Arşiv · Uyumsoft</div>
+ <div class="form" style="max-width:none"><div class="two"><div class="fld"><label>Entegratör</label><select><option>Uyumsoft</option><option>Logo</option><option>Foriba</option></select></div><div class="fld"><label>VKN / TCKN</label><input value="1234567890"></div></div>
+ <div class="fld"><label>Fatura-Serie</label><input value="MTX2026"></div><div class="tog"><span>Auto-Fatura bei Ride-Ende</span><span class="sw on"></span></div><div class="tog"><span>e-Arşiv für B2C-Rider</span><span class="sw on"></span></div>
+ <button class="btn">Verbindung speichern</button><span class="note">GİB-konform. Jede Fahrt → automatische e-Fatura/e-Arşiv über Uyumsoft-API.</span></div></div>
+ <div class="card pad"><div class="sectitle">Letzte Belege</div><div class="twrap"><table><thead><tr><th>Nr</th><th>Rider</th><th>Betrag</th><th>Status</th></tr></thead><tbody>${[["MTX2026-04821","Zeynep A.","₺62,00","ok","gesendet"],["MTX2026-04820","Can D.","₺29,00","ok","gesendet"],["MTX2026-04819","Selin B.","₺20,00","warn","wartet"]].map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td><td>${pill(r[3],r[4])}</td></tr>`).join('')}</tbody></table></div></div></div>`;}
+function cInvDet(p){return `<div class="card"><div class="ch"><div><h3>Rechnung MTX2026-04821</h3><span class="note">Zeynep A. · 2026-08-14</span></div><div class="act">${pill('ok','bezahlt')} <button class="btn ghost sm">PDF</button><button class="btn sm">e-Fatura</button></div></div>
+ <div class="twrap"><table><thead><tr><th>Position</th><th>Menge</th><th>Einzel</th><th>Summe</th></tr></thead><tbody><tr><td>Unlock-Gebühr</td><td>1</td><td>₺10,00</td><td>₺10,00</td></tr><tr><td>Fahrzeit (14 min)</td><td>14</td><td>₺2,50</td><td>₺35,00</td></tr></tbody></table></div>
+ <div class="kv"><div class="k">Netto</div><div>₺45,00</div><div class="k">KDV 20%</div><div>₺9,00</div><div class="k"><b>Gesamt</b></div><div><b>₺54,00</b></div><div class="k">Zahlung</div><div>ZeroPay-Wallet</div></div></div>`;}
+function cTxns(p){return `<div class="card"><div class="toolbar"><span class="chip on">Alle</span><span class="chip">Wallet-Topup</span><span class="chip">Ride-Charge</span><span class="chip">Refund</span><div style="flex:1"></div><button class="btn ghost sm">⤓ Export</button></div>
+ <div class="twrap"><table><thead><tr><th>TX-ID</th><th>Rider</th><th>Typ</th><th>Methode</th><th>Betrag</th><th>Zeit</th><th>Status</th></tr></thead><tbody>
+ ${[["TX-99841","Zeynep A.","Ride-Charge","ZeroPay","₺62,00","09:41","ok","erfolgreich"],["TX-99840","Can D.","Wallet-Topup","Visa ••42","₺50,00","09:38","ok","erfolgreich"],["TX-99839","Selin B.","Ride-Charge","Belediye-Kart","₺20,00","09:35","warn","pending"],["TX-99838","Emre K.","Refund","ZeroPay","-₺15,00","09:20","info","erstattet"]].map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><b>${r[4]}</b></td><td class="muted">${r[5]}</td><td>${pill(r[6],r[7])}</td></tr>`).join('')}</tbody></table></div></div>`;}
+function cBrand(p){const PAL=[["#E30A17","#ff3d4a","Motrix Rot"],["#0D1B3E","#24427a","Navy Mono"],["#1cad6e","#22c98a","Grün"],["#0d9488","#14b8a6","Teal"],["#2563eb","#3b82f6","Mavi"],["#7c3aed","#9361f0","Mor"],["#E8C840","#f2d75a","Gold"]];
+ return `<div class="row r-2" style="margin-top:0"><div class="card pad"><div class="sectitle">Branding / Theme · Kayseri</div>
+ <div class="note" style="margin-bottom:.9rem">Klick eine Akzentfarbe → das <b>ganze Panel</b> färbt sich live um. Genau so funktioniert White-Label pro Tenant: <b>eine Token-Variable</b>. (Wirkt auch auf den Umschalter unten rechts.)</div>
+ <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.1rem">${PAL.map(c=>`<button data-c="${c[0]}" onclick="setAccent('${c[0]}','${c[1]}')" title="${c[2]}" style="width:48px;height:48px;border-radius:13px;border:3px solid ${c[0]==='#E30A17'?'#0D1B3E':'var(--line)'};background:${c[0]};cursor:pointer"></button>`).join('')}</div>
+ <div class="form" style="max-width:none"><div class="two"><div class="fld"><label>Marken-Name</label><input value="Motrix Kayseri"></div><div class="fld"><label>Primärfarbe (Hex)</label><input value="#E30A17"></div></div>
+ <div class="fld"><label>Logo</label><input placeholder="Datei wählen… (PNG / SVG)"></div>
+ <div class="tog"><span>Dark-Mode erlauben</span><span class="sw"></span></div><div class="tog"><span>Eigene Domain (motrix.kayseri.bel.tr)</span><span class="sw on"></span></div>
+ <button class="btn">Branding speichern</button></div></div>
+ <div class="card pad"><div class="sectitle">Live-Vorschau</div><div class="card kpi" style="margin-bottom:.8rem"><span class="l">Aktive Fahrten</span><span class="n">8</span><span class="d up">▲ live</span></div>
+ <button class="btn" style="width:100%;margin-bottom:.7rem">Primär-Button</button>
+ <div><span class="pill p-ok"><span class="dot"></span>OK</span> <span class="chip on" style="margin-left:.3rem">Aktiver Chip</span></div>
+ <div class="banner" style="margin-top:1rem">🏷 White-Label = genau 1 Token</div></div></div>`;}
+const CUSTOM={"brand":cBrand,"veh-det":cVehDet,"geo":cGeo,"veh-cmd":cCmd,"active":cActive,"user-det":cUserDet,"kyc":cKyc,"price-new":cPriceNew,
+ "tasks":cTasks,"rebal":cRebal,"maint-det":cMaintDet,"reports":cReports,"esg":cEsg,"muni":cMuni,"munirep":cMuni,"heat":cHeat,"pgs":cPgs,"efatura":cEfatura,"inv-det":cInvDet,"txns":cTxns};
+
+/* ===== CFG: seiten-spezifische Spalten/Felder/Tabs/KPIs für ALLE übrigen Admin-Seiten ===== */
+const CFG={
+ /* DASHBOARD */
+ "dash-live":{k:[["Bikes online","56","+2"],["Aktive Fahrten","8","+3"],["Offene Alerts","4","-1"],["Ø Batterie","76%","-4%"],["Umsatz heute","₺2.480","+12%"]]},
+ "dash-alerts":{c:["Zeit","Typ","Bike","Zone","Schwere","Status","Aktion"]},
+ "dash-rev":{k:[["Umsatz heute","₺2.480","+12%"],["Umsatz (7T)","₺16.900","+9%"],["Ø/Fahrt","₺7,54","+5%"],["Fahrten heute","328","+7%"],["Wallet-Topups","₺4.100","+3%"]]},
+ "dash-health":{k:[["Gateway-Uptime","99,9%","+0%"],["API-Latenz","42 ms","-8%"],["Msg-Queue-Lag","0 s","+0%"],["DB-Status","OK"],["Aktive Sessions","56","+2"]]},
+ "dash-saved":{c:["Name","Modul","Filter","Sichtbar","Erstellt"]},
+ /* VEHICLES */
+ "veh-new":{f:[["QR-Nr","1769075161"],["IMEI","863235080301854"],["Modell","select:G7|G5"],["Fahrzeug-Typ","select:E-Bike Standard|E-Bike Pro|E-Moped"],["Tenant","select:Kayseri|Gaziantep|Trabzon"],["Zone","select:Millet Bahçeleri|Talas|Kampüs"]],t:["Sofort aktivieren","Test-Modus"]},
+ "veh-imp":{f:[["Datei (CSV/XLSX)","file"],["Spalten-Mapping","Frame ↔ IMEI"],["Tenant","select:Kayseri|Gaziantep"],["Vehicle-Typ","select:E-Bike Standard|E-Bike Pro"]],t:["Duplikate überspringen","Nach Import aktivieren"]},
+ "veh-types":{c:["Name","Kategorie","Max-Speed","Reichweite","Bikes","Status"]},
+ "veh-type-new":{f:[["Name","E-Bike Standard"],["Kategorie","select:E-Bike|E-Moped|E-Scooter"],["Max-Speed","25 km/h"],["Reichweite","70 km"],["Motor","250 W"],["Batterie","48V 15Ah"]],t:["Helm erforderlich","Führerschein erforderlich"]},
+ "iot":{c:["IMEI","Modell","ICCID","Firmware","Bike","Signal","Status"]},
+ "iot-det":{tabs:["Übersicht","Konnektivität","Firmware","Logs"],kv:[["IMEI",`<span class="mono">863235080301854</span>`],["Modell","Omni OC32"],["ICCID",`<span class="mono">8990011700000123456</span>`],["Provider","Turkcell M2M"],["Firmware","v1.3.5"],["Signal","28/31"],["Zugeordnetes Bike",`<span class="mono">863…854</span>`],["Status",pill('ok','online')]]},
+ "iot-assign":{f:[["IoT-Modul (IMEI)","select:863235080301854|863235080208943"],["Fahrzeug (QR)","select:1769075161|1769075162"]],t:["Alte Zuordnung lösen"]},
+ "veh-fw":{c:["Version","Datum","Geräte","Rollout","Status"]},
+ "veh-batt":{k:[["Ø Batterie","76%","-4%"],["Low (<20%)","3","+1"],["Am Laden","5","+2"],["Kritisch (0%)","1","+1"],["Swaps heute","8","+3"]]},
+ "veh-attr":{c:["Gruppe","Attribute","Fahrzeuge","Aktualisiert"]},
+ "veh-cards":{c:["Karten-ID","Typ","Zugeordnet","Status","Actions"]},
+ /* GEOFENCES */
+ "geo-list":{c:["Name","Typ","Fläche","Regeln","Fahrzeuge","Status"]},
+ "geo-new":{f:[["Name","Millet Bahçeleri"],["Typ","select:Service|Parking|No-Ride|Slow"],["Tenant","select:Kayseri|Gaziantep"],["Max-Speed in Zone","25 km/h"]],t:["Speed drosseln (S7)","Alarm-Ton (V0)","Lock-on-Stop","Parken erlaubt"]},
+ "geo-types":{c:["Area-Typ","Farbe","Enforcement","Zonen"]},
+ "st":{c:["Station","Standort","Slots","Belegt","Status"]},
+ "st-new":{f:[["Name","Cumhuriyet Meydanı"],["Latitude","38.7225"],["Longitude","35.4820"],["Kapazität","20"],["Typ","select:Virtuell|Physisch (Slots)"]],t:["Pflicht-Parkzone","Bonus-Rückgabe"]},
+ "st-slots":{c:["Slot","Station","Bike","Status"]},
+ /* RIDES */
+ "ride-det":{tabs:["Zusammenfassung","Route / Breadcrumb","Events","Abrechnung"],kv:[["Ride-ID",`<span class="mono">R-4818</span>`],["Rider","Zeynep A."],["Bike",`<span class="mono">863235080301854</span>`],["Start","09:41"],["Ende","10:00"],["Dauer","19 min"],["Distanz","3,2 km"],["Preis","₺62,00"],["Zahlung","ZeroPay-Wallet"],["Status",pill('ok','abgeschlossen')]]},
+ "book":{c:["Buchung","Rider","Bike","Zeitfenster","Status"]},
+ "book-new":{f:[["Rider","select:Zeynep A.|Can D.|Selin B."],["Bike / Typ","select:E-Bike Standard|Bestimmtes Bike"],["Datum","2026-08-24"],["Zeitfenster","09:00 – 10:00"]],t:["Erinnerung senden"]},
+ "disp":{c:["Dispute","Rider","Ride","Grund","Betrag","Status"]},
+ "disp-det":{tabs:["Details","Nachrichten","Belege","Entscheidung"],kv:[["Dispute",`<span class="mono">D-2041</span>`],["Rider","Can D."],["Ride",`<span class="mono">R-4791</span>`],["Grund","Zu hoher Betrag"],["Streitwert","₺29,00"],["Status",pill('warn','offen')]]},
+ "refunds":{c:["Refund","Rider","Ride","Betrag","Grund","Status"]},
+ "add":{c:["Zusatz","Ride","Typ","Betrag","Status"]},
+ /* USERS */
+ "user-new":{f:[["Vorname","Zeynep"],["Nachname","A."],["Telefon","+90 531 000 00 42"],["E-Mail",""],["Tenant","select:Kayseri|Gaziantep"],["Sprache","select:TR|EN|DE"]],t:["Aktiv","KYC erforderlich"]},
+ "kyc-media":{tabs:["ID-Vorderseite","ID-Rückseite","Selfie","NFC-Daten"],kv:[["Rider","Mehmet T."],["ID-Typ","T.C. Kimlik"],["NFC","gelesen"],["Selfie-Match","96%"],["Risk",pill('ok','niedrig')],["Prüfer","Auto + Support"]]},
+ "idcards":{c:["Karten-ID","Typ","Rider","Status"]},
+ "biz":{c:["Firma","VKN","Mitglieder","Guthaben","Status"]},
+ "biz-det":{tabs:["Details","Mitglieder","Abrechnung","Verträge"],kv:[["Firma","Kayseri OSB A.Ş."],["VKN",`<span class="mono">1234567890</span>`],["Mitglieder","24"],["Guthaben","₺4.200"],["Abrechnung","Monatlich (Sammelrechnung)"],["Status",pill('ok','aktiv')]]},
+ "blk":{c:["Rider","Grund","Risk","Seit","Aktion"]},
+ /* PRICING */
+ "pricing":{c:["Bundle","Tenant","Unlock","Preis/Min","Cap","Status"]},
+ "price-det":{tabs:["Übersicht","Versionen","A/B-Test","Zuordnung"],kv:[["Bundle","Kayseri Standard"],["Unlock","₺10,00"],["Preis/Min","₺2,50"],["Cap/Fahrt","₺150,00"],["Version","v3"],["Status",pill('ok','live')]]},
+ "price-calc":{f:[["Bundle","select:Kayseri Standard|Student|Belediye"],["Dauer (min)","14"],["Zone","select:Standard|Slow-Zone"]],t:["Promo anwenden"]},
+ "price-sim":{f:[["Szenario","Rush-Hour"],["Nachfrage-Elastizität","-0,4"],["Unlock","₺10,00"],["Preis/Min","₺2,50"],["Erwartete Fahrten","+12%"]],t:["Surge aktivieren"]},
+ "packages":{c:["Paket","Inhalt","Preis","Gültigkeit","Status"]},
+ "subs":{c:["Abo","Rider","Plan","Nächste Zahlung","Status"]},
+ /* BILLING */
+ "wallets":{c:["Rider","Saldo","Letzte Aufladung","Methode","Status"]},
+ "inv":{c:["Rechnung","Rider","Betrag","KDV","Datum","Status"]},
+ "inv-new":{f:[["Rider","select:Zeynep A.|Can D."],["Positionen","Unlock + Fahrzeit"],["Netto","₺45,00"],["KDV (20%)","₺9,00"]],t:["e-Fatura erzeugen","Sofort senden"]},
+ "coll":{c:["Rider","Offen","Mahnstufe","Fällig","Status"]},
+ "fines":{c:["Strafe","Rider","Ride","Grund","Betrag","Status"]},
+ "payouts":{c:["Payout","Empfänger","Betrag","Periode","Status"]},
+ "revc":{c:["Revenue-Center","Tenant","Umsatz (30T)","Anteil"]},
+ /* FIELD OPS */
+ "tasks-list":{c:["Task","Typ","Zugewiesen","Priorität","Fällig","Status"]},
+ "task-new":{f:[["Titel","Rebalance Millet B."],["Typ","select:Rebalance|Battery-Swap|Repair|Inspect|Collect"],["Zuweisen","select:Ali R.|Emre K.|Deniz A."],["Priorität","select:Hoch|Mittel|Niedrig"],["Fällig","2026-08-24"],["Zone","select:Millet Bahçeleri|Talas"]],t:["Foto-Nachweis erforderlich","Wiederkehrend"]},
+ "task-tpl":{c:["Template","Typ","Schritte","Aktiv"]},
+ "swap":{c:["Bike","Batterie alt","Batterie neu","Techniker","Status"]},
+ "maint":{c:["Ticket","Bike","Kategorie","Priorität","Techniker","Status"]},
+ "dmg":{c:["Schaden","Bike","Gemeldet von","Schwere","Status"]},
+ "workers":{c:["Techniker","Zone","Offene Tasks","Erledigt (7T)","Status"]},
+ "ware":{c:["Teil","Lager","Bestand","Min","Status"]},
+ /* REPORTS */
+ "util":{k:[["Auslastung","62%","+8%"],["Ø Fahrten/Bike/Tag","5,8","+0,4"],["Idle-Bikes","12","-3"],["Peak-Stunde","18:00"],["Ø Fahrtdauer","14 min","+1"]]},
+ "insights":{k:[["App-Opens (Tag)","4.210","+6%"],["Trip-Start-Rate","31%","+2%"],["Ø bis Unlock","38 s","-4s"],["Retention 30T","44%","+3%"],["NPS","62","+4"]]},
+ "timeline":{c:["Zeit","Ereignis","Entität","Nutzer"]},
+ "custom":{k:[["Widget 1","—"],["Widget 2","—"],["Widget 3","—"],["Widget 4","—"]]},
+ "exports":{c:["Export","Format","Zeitraum","Erstellt","Status"]},
+ /* MARKETING */
+ "camp":{c:["Kampagne","Kanal","Zielgruppe","Start","Status"]},
+ "push":{f:[["Titel","Hafta sonu %20"],["Nachricht","textarea"],["Zielgruppe","select:Alle|Inaktive|Neue Rider|Zone"],["Zeitpunkt","select:Sofort|Geplant"]],t:["Deep-Link","A/B-Test","Nur Push-Opt-in"]},
+ "banner":{c:["Banner","Platzierung","Zeitraum","Klicks","Status"]},
+ "banner-new":{f:[["Titel",""],["Bild","file"],["Ziel-URL",""],["Platzierung","select:Home|Karte|Wallet"],["Zeitraum","2026-08-24 – 09-24"]],t:["Aktiv","Nur bestimmte Zone"]},
+ "email":{f:[["Betreff",""],["Kanal","select:E-Mail|SMS"],["Zielgruppe","select:Alle|Inaktive|Business"],["Vorlage","select:Standard|Promo|Newsletter"]],t:["Testversand","Double-Opt-in prüfen"]},
+ "promo":{c:["Code","Typ","Wert","Einlösungen","Gültig bis","Status"]},
+ "voucher-new":{f:[["Code","ILK5"],["Typ","select:Prozent|Fixbetrag|Frei-Minuten"],["Wert","5"],["Nutzungslimit","1000"],["Gültig bis","2026-12-31"],["Zielgruppe","select:Neue Rider|Alle"]],t:["Einmalig pro Rider","Nur erste Fahrt"]},
+ "referral":{k:[["Einladungen","1.240","+8%"],["Konvertiert","410","+11%"],["Konversion","33%","+2%"],["Bonus ausgezahlt","₺8.200","+6%"],["Ø Wert/Referral","₺20"]]},
+ "loyalty":{c:["Rider","Punkte","Stufe","Eingelöst","Status"]},
+ "nchan":{c:["Kanal","Typ","Provider","Status"]},
+ "content":{c:["Inhalt","Typ","Sprache","Status"]},
+ /* SUPPORT */
+ "tickets":{c:["Ticket","Rider","Betreff","Kanal","Priorität","Status"]},
+ "ticket-det":{tabs:["Konversation","Rider-Info","Ride-Kontext","Interne Notizen"],kv:[["Ticket",`<span class="mono">#SUP-2041</span>`],["Rider","Can D."],["Betreff","Unlock funktioniert nicht"],["Kanal","In-App-Chat"],["Priorität",pill('warn','mittel')],["Status",pill('info','offen')],["Zugewiesen","Support-Team"]]},
+ "sup-disp":{c:["Dispute","Rider","Betrag","Grund","Status"]},
+ "safety":{c:["Event","Bike","Typ","Ort","Zeit","Status"]},
+ "fraud":{c:["Flag","Rider","Signal","Risk","Status"]},
+ "comm":{c:["Meldung","Melder","Typ","Ort","Status"]},
+ "issues":{c:["Issue","Bike","Typ","Gemeldet","Status"]},
+ "sos":{c:["SOS","Rider","Ort","Zeit","Status"]},
+ /* COMPLIANCE */
+ "gbfs":{f:[["Feed-URL","https://api.motrix.com.tr/gbfs/v3"],["Version","select:v3.0|v2.3"],["Sprachen","tr, en"],["Tenant","select:Kayseri|Gaziantep"]],t:["free_bike_status","station_information","system_pricing_plans","geofencing_zones"]},
+ "mds":{f:[["Provider-ID","motrix-kayseri"],["Agency","KayBis"],["Endpoint","https://api.motrix.com.tr/mds"]],t:["Provider-API","Policy-API","Metrics-API"]},
+ "policy":{c:["Policy","Typ","Geltungsbereich","Aktiv seit","Status"]},
+ "permits":{c:["Permit","Stadt","Fahrzeug-Cap","Zonen","Status"]},
+ "audit":{c:["Zeit","Nutzer","Aktion","Entität","IP"]},
+ "terms":{c:["Dokument","Version","Sprache","Gültig ab","Status"]},
+ "privacy":{f:[["KVKK-Verantwortlicher","Zerokan / Motrix A.Ş."],["Aufbewahrung (Tage)","3650"],["Daten-Residenz","select:TR On-Prem|EU"],["DPO-Kontakt","kvkk@motrix.com.tr"]],t:["Auto-Anonymisierung","Export-on-Request","Recht auf Löschung"]},
+ /* WHITE-LABEL */
+ "tenants":{c:["Tenant / Stadt","Fahrzeuge","Aktive Rider","Umsatz (30T)","Status"]},
+ "tenant-det":{tabs:["Übersicht","Branding","Feature-Flags","Abrechnung","Verträge"],kv:[["Tenant","Kayseri"],["Fahrzeuge","500"],["Aktive Rider","2.140"],["Vertrag","10 Jahre exklusiv"],["Payment","ZeroPay"],["Status",pill('ok','aktiv')]]},
+ "brand":{f:[["Marken-Name","Motrix Kayseri"],["Primärfarbe","#E30A17"],["Sekundärfarbe","#0D1B3E"],["Logo","file"],["App-Name","Motrix"],["App-Icon","file"]],t:["Dark-Mode erlauben","Eigene Domain","Eigener App-Store-Eintrag"]},
+ "flags":{c:["Feature-Flag","Beschreibung","Tenant","Status"]},
+ "appcfg":{f:[["App-Sprache","select:TR|EN|DE"],["Karten-Anbieter","select:OSM|Google|Mapbox"],["Min-Batterie Unlock","20%"],["Max-Reservierung","15 min"]],t:["Reservierung erlauben","Foto bei Ride-Ende","In-App-Chat","Trinkgeld erlauben"]},
+ "i18n":{c:["Schlüssel","DE","EN","TR","Status"]},
+ "maas":{c:["MaaS-Client","API-Key","Scope","Status"]},
+ /* ADMINISTRATION */
+ "staff":{c:["Name","Rolle","E-Mail","Letzter Login","Status"]},
+ "staff-det":{tabs:["Profil","Rollen","Aktivität","Sitzungen"],kv:[["Name","Berkant T."],["Rolle","Admin"],["E-Mail","brkntk@gmail.com"],["Tenant-Zugriff","Alle"],["2FA",pill('ok','aktiv')],["Status",pill('ok','aktiv')]]},
+ "invite":{f:[["E-Mail",""],["Rolle","select:Admin|Operator|Support|Techniker"],["Tenant","select:Kayseri|Alle"]],t:["2FA erzwingen","Willkommens-Mail senden"]},
+ "roles":{c:["Rolle","Nutzer","Berechtigungen","Status"]},
+ "role-new":{f:[["Rollen-Name","Operator"],["Basis-Rolle","select:—|Admin|Support|Techniker"]],t:["Fahrzeuge verwalten","Fahrten einsehen","Preise ändern","Nutzer verwalten","Auszahlungen","Einstellungen","Geofences bearbeiten"]},
+ "apikeys":{c:["Name","Key","Scope","Erstellt","Status"]},
+ "webhooks":{c:["Event","Endpoint","Letzter Status","Aktiv"]},
+ "integr":{c:["Integration","Typ","Status","Verbunden"]},
+ "settings":{f:[["Firmenname","Zerokan / Motrix A.Ş."],["Zeitzone","Europe/Istanbul"],["Währung","select:TRY ₺|EUR €"],["Standard-Sprache","select:DE|EN|TR"]],t:["Wartungsmodus","E-Mail-Benachrichtigungen","Audit-Logging"]},
+ "profile":{f:[["Name","Berkant T."],["E-Mail","brkntk@gmail.com"],["Telefon","+90 5•• ••• ••"],["Passwort","••••••••"]],t:["2FA aktiviert","Login-Benachrichtigungen"]}
+};
+
+/* ============ charts + map hooks ============ */
+function area(el,data,color){const w=560,h=150,p=8,max=Math.max(...data),min=Math.min(...data);const X=i=>p+i*(w-2*p)/(data.length-1),Y=v=>h-p-(v-min)/(max-min||1)*(h-2*p);let d=`M${X(0)},${Y(data[0])}`;data.forEach((v,i)=>d+=`L${X(i)},${Y(v)}`);el.innerHTML=`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:150px"><defs><linearGradient id="g${Math.random().toString(36).slice(2)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".28"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs><path d="${d}L${X(data.length-1)},${h}L${X(0)},${h}Z" fill="${color}" fill-opacity=".12"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2.5"/></svg>`;}
+function bars(el,data,color){const max=Math.max(...data);el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:6px;height:150px">${data.map(v=>`<div style="flex:1;background:${color};opacity:.85;border-radius:4px 4px 0 0;height:${v/max*100}%"></div>`).join('')}</div>`;}
+let mapInited=null;
+function initMap(){const el=document.getElementById('map');if(!el||el._done)return;el._done=1;
+  const m=L.map(el).setView([38.7225,35.4820],14);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m);
+  L.polygon([[38.7290,35.4720],[38.7300,35.4930],[38.7150,35.4950],[38.7135,35.4740]],{color:'#15a34a',weight:2,dashArray:'6 5',fillColor:'#15a34a',fillOpacity:.08}).addTo(m).bindTooltip('Service-Area · Millet Bahçeleri');
+  L.polygon([[38.7248,35.4855],[38.7255,35.4890],[38.7228,35.4894],[38.7223,35.4858]],{color:'#dc2626',weight:2,dashArray:'6 5',fillColor:'#dc2626',fillOpacity:.12}).addTo(m).bindTooltip('No-Ride');
+  L.polygon([[38.7198,35.4778],[38.7205,35.4815],[38.7178,35.4820],[38.7172,35.4782]],{color:'#c77b0a',weight:2,dashArray:'6 5',fillColor:'#c77b0a',fillOpacity:.12}).addTo(m).bindTooltip('Slow 10 km/h');
+  const C={ok:'#15a34a',info:'#2563eb',warn:'#c77b0a',bad:'#dc2626'},G={ok:'⚡',info:'▶',warn:'🔋',bad:'!'};
+  const pts=[[38.7248,35.4808,'ok'],[38.7222,35.4842,'info'],[38.7258,35.4792,'ok'],[38.7208,35.4818,'info'],[38.7235,35.4838,'ok'],[38.7192,35.4800,'warn'],[38.7250,35.4862,'ok'],[38.7188,35.4835,'bad'],[38.7240,35.4775,'warn'],[38.7215,35.4788,'ok']];
+  pts.forEach((b,i)=>{L.marker([b[0],b[1]],{icon:L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,24],html:`<div class="mpin" style="background:${C[b[2]]}"><span>${G[b[2]]}</span></div>`})}).addTo(m).bindPopup(`<b>Bike ${IM(i).slice(-6)}</b><br>${IM(i)}<br>Millet Bahçeleri`);});
+  setTimeout(()=>m.invalidateSize(),100);}
+
+/* ============ router + nav ============ */
+const PAGEMAP={}; MODULES.forEach(mo=>mo.pages.forEach(p=>PAGEMAP[p[0]]={...{},0:p[0],1:p[1],2:p[2],mod:mo}));
+function buildNav(){document.getElementById('nav').innerHTML=MODULES.map(mo=>`<div class="mod${mo.id==='dash'?' open':''}" data-m="${mo.id}"><div class="mh"><span class="ic">${mo.ic}</span><span class="mn">${mo.name}</span><span class="ar">▶</span></div><div class="sub">${mo.pages.map(p=>`<a data-p="${p[0]}">${p[1]}</a>`).join('')}</div></div>`).join('');}
+function go(id){const p=PAGEMAP[id];if(!p)return;const pg=[p[0],p[1],p[2]];
+  document.getElementById('ptitle').textContent=p[1];
+  document.getElementById('crumb').textContent="Motrix · Kayseri · "+p.mod.name;
+  document.getElementById('view').innerHTML=(CUSTOM[id]||RENDER[p[2]])(pg);
+  document.querySelectorAll('.sub a').forEach(a=>a.classList.toggle('on',a.dataset.p===id));
+  const mo=document.querySelector(`.mod[data-m="${p.mod.id}"]`);if(mo&&!mo.classList.contains('open'))mo.classList.add('open');
+  // hooks
+  document.querySelectorAll('[data-chart="rev"]').forEach(el=>area(el,[120,140,135,160,175,150,190,210,185,220,205,240,235,268],getComputedStyle(document.documentElement).getPropertyValue('--primary')));
+  document.querySelectorAll('[data-chart="bar"]').forEach(el=>bars(el,[8,12,6,15,10,18,9,14],getComputedStyle(document.documentElement).getPropertyValue('--navy')));
+  if(p[2]==='map')initMap();
+  const dt=document.getElementById('dtabs');if(dt)dt.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;dt.querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');const tp=a.dataset.tab;if(tp){const pnl=document.getElementById('dpanels');if(pnl)pnl.querySelectorAll('[data-panel]').forEach(pl=>pl.style.display=pl.dataset.panel===tp?'':'none');if(tp==='loc'){initMap();}}});
+  window.scrollTo(0,0);
+}
+document.getElementById('nav').addEventListener('click',e=>{const a=e.target.closest('.sub a');if(a){go(a.dataset.p);return;}const h=e.target.closest('.mh');if(h)h.parentElement.classList.toggle('open');});
+
+/* ============ i18n (nav/module level; deep i18n via CMS) ============ */
+const TR={ // [en, tr]
+ "Dashboard":["Dashboard","Kontrol Paneli"],"Vehicles / Fleet":["Vehicles / Fleet","Araçlar / Filo"],"Live-Map":["Live Map","Canlı Harita"],"Geofences":["Geofences","Bölgeler"],"Rides / Rentals":["Rides / Rentals","Sürüşler / Kiralamalar"],"Customers / Users":["Customers / Users","Müşteriler / Kullanıcılar"],"Pricing":["Pricing","Fiyatlandırma"],"Billing & Payments":["Billing & Payments","Faturalama & Ödemeler"],"Field Operations":["Field Operations","Saha Operasyonları"],"Reports & BI":["Reports & BI","Raporlar & BI"],"Marketing / CRM":["Marketing / CRM","Pazarlama / CRM"],"Support & Safety":["Support & Safety","Destek & Güvenlik"],"Compliance / City":["Compliance / City","Uyumluluk / Şehir"],"White-Label / Tenants":["White-Label / Tenants","White-Label / Kiracılar"],"Administration":["Administration","Yönetim"]
+};
+function applyLang(l){const idx=l==='en'?0:l==='tr'?1:-1;
+  document.querySelectorAll('.mod .mn').forEach(el=>{if(el.dataset.o===undefined)el.dataset.o=el.textContent;const o=el.dataset.o;el.textContent=idx<0?o:(TR[o]?TR[o][idx]:o);});
+  const N={de:['🇩🇪','Deutsch'],en:['🇬🇧','English'],tr:['🇹🇷','Türkçe']};document.getElementById('langflag').textContent=N[l][0];document.getElementById('langname').textContent=N[l][1];
+  document.querySelectorAll('#langmenu button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));}
+const dd=document.getElementById('langdd');
+document.getElementById('langtrig').addEventListener('click',e=>{e.stopPropagation();dd.classList.toggle('open');});
+document.getElementById('langmenu').addEventListener('click',e=>{const b=e.target.closest('button');if(b){applyLang(b.dataset.l);dd.classList.remove('open');}});
+document.addEventListener('click',()=>dd.classList.remove('open'));
+
+function setAccent(c,c2){const r=document.documentElement.style;r.setProperty('--primary',c);r.setProperty('--primary-2',c2);r.setProperty('--primary-soft','color-mix(in srgb, '+c+' 12%, white)');document.querySelectorAll('.accfab button,[data-c]').forEach(x=>{if(x.dataset&&x.dataset.c!==undefined)x.classList.toggle('on',x.dataset.c===c);});}
+const APALS=[["#E30A17","#ff3d4a","Motrix Rot"],["#0D1B3E","#24427a","Navy"],["#1cad6e","#22c98a","Grün"],["#0d9488","#14b8a6","Teal"],["#2563eb","#3b82f6","Mavi"],["#7c3aed","#9361f0","Mor"]];
+const afab=document.createElement('div');afab.className='accfab';afab.innerHTML='<div class="lbl">Akzent · White-Label</div><div class="dots">'+APALS.map((p,i)=>`<button data-c="${p[0]}" onclick="setAccent('${p[0]}','${p[1]}')" title="${p[2]}" class="${i?'':'on'}" style="background:${p[0]}"></button>`).join('')+'</div>';document.body.appendChild(afab);
+
+buildNav();go('dash');
+</script>
+</body>
+</html>

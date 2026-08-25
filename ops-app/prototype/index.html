@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motrix Saha (Ops-App) — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--primary:#E30A17;--primary-2:#ff3d4a;--navy:#0D1B3E;--bg:#eef2f8;--surface:#fff;--ink:#0f1a2e;--muted:#69758c;--line:#e2e8f2;
+    --ok:#15a34a;--ok-s:#e4f6ea;--warn:#c77b0a;--warn-s:#fbf1dc;--bad:#dc2626;--bad-s:#fce6e6;--info:#2563eb;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#06090f;color:var(--ink);font-family:'Poppins',-apple-system,sans-serif;padding:2.2rem 1.6rem 4rem}
+  .head{max-width:1200px;margin:0 auto 1.6rem;color:#fff}
+  .head h1{font-size:1.5rem;font-weight:800;display:flex;align-items:center;gap:.5rem}.head h1 i{color:var(--primary)}
+  .head p{color:#8592ad;font-size:.9rem;margin-top:.3rem;max-width:780px}
+  .flag{display:inline-block;background:#111c33;border:1px solid #26344f;border-radius:8px;padding:.15rem .5rem;font-size:.72rem;color:#8592ad;font-weight:600;margin-right:.4rem;margin-top:.5rem}
+  .grp{max-width:1300px;margin:0 auto}
+  .grp h2{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:#5a6786;font-weight:700;margin:2.4rem 0 1.1rem;border-bottom:1px solid #141d2e;padding-bottom:.5rem}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,300px);gap:1.5rem 1.4rem;justify-content:center}
+  .frame{width:300px;height:624px;background:var(--bg);border-radius:38px;border:9px solid #060a12;box-shadow:0 0 0 2px #1a2438,0 22px 50px rgba(0,0,0,.6);position:relative;overflow:hidden}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:24px;background:#060a12;border-radius:0 0 16px 16px;z-index:30}
+  .scr{position:absolute;inset:0;border-radius:29px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
+  .cap{color:#8592ad;font-size:.78rem;text-align:center;margin-top:.65rem;font-weight:600}
+  /* navy header */
+  .tb{background:var(--navy);color:#fff;padding:.5rem 1.1rem .85rem}
+  .tbsb{display:flex;justify-content:space-between;font-size:.68rem;font-weight:700;opacity:.85;padding:.15rem 0 .5rem}
+  .tbrow{display:flex;align-items:center;justify-content:space-between}
+  .tbrow .ic{font-size:1.15rem;width:24px}.tbrow .ic.r{text-align:right}
+  .tbrow b{font-weight:700;font-size:1rem}
+  .brand{font-weight:800;font-size:1.02rem;display:flex;align-items:center;gap:.15rem}.brand i{color:var(--primary);font-style:normal}
+  .hello{padding:.2rem 0 .1rem}.hello .s{font-size:.8rem;opacity:.8}.hello .n{font-size:1.25rem;font-weight:800}
+  .ct{flex:1;padding:1rem 1.1rem;overflow-y:auto}
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;height:100%}
+  /* components */
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1rem}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:.8rem}
+  .kpi .l{color:var(--muted);font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .kpi .n{font-size:1.5rem;font-weight:800;margin-top:.1rem}.kpi .n.red{color:var(--primary)}
+  .qa{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1rem}
+  .qbtn{background:var(--navy);color:#fff;border-radius:14px;padding:.9rem;font-weight:700;font-size:.86rem;text-align:center;display:flex;align-items:center;justify-content:center;gap:.4rem}
+  .qbtn.red{background:var(--primary)}
+  .sect{font-size:.82rem;font-weight:700;color:var(--muted);margin:.3rem 0 .6rem;text-transform:uppercase;letter-spacing:.05em}
+  .task{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:.75rem .85rem;margin-bottom:.7rem;display:flex;gap:.75rem;align-items:center}
+  .task .ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex:none}
+  .ic.reb{background:var(--info-s,#e5edfd);color:var(--info)}.ic.bat{background:var(--warn-s);color:var(--warn)}.ic.rep{background:var(--bad-s);color:var(--bad)}.ic.dep{background:var(--ok-s);color:var(--ok)}.ic.col{background:#eef1f6;color:var(--navy)}
+  .task .tt{font-weight:700;font-size:.88rem}.task .tm{color:var(--muted);font-size:.74rem;margin-top:.12rem}
+  .task .ar{margin-left:auto;color:#c2cadb}
+  .pill{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.1rem .5rem;font-size:.68rem;font-weight:700}
+  .p-ok{background:var(--ok-s);color:var(--ok)}.p-warn{background:var(--warn-s);color:var(--warn)}.p-bad{background:var(--bad-s);color:var(--bad)}.p-info{background:#e5edfd;color:var(--info)}
+  .btn{background:var(--primary);color:#fff;border:0;border-radius:13px;padding:.85rem;font-weight:700;font-size:.9rem;width:100%;font-family:inherit;cursor:pointer;box-shadow:0 8px 18px rgba(227,10,23,.28)}
+  .btn.navy{background:var(--navy);box-shadow:none}.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.green{background:var(--ok);box-shadow:none}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1rem;margin-bottom:.9rem}
+  .kv{display:flex;justify-content:space-between;padding:.4rem 0;font-size:.85rem;border-bottom:1px solid var(--line)}.kv:last-child{border:0}.kv .k{color:var(--muted)}.kv b{font-weight:700}
+  .lbl{color:var(--muted);font-size:.75rem;font-weight:600;margin:.9rem 0 .35rem}
+  .inp{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.8rem;color:var(--muted);font-size:.88rem}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+  .map{position:absolute;inset:0;overflow:hidden}.mapsvg{width:100%;height:100%;display:block}
+  .pin{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.3);border:2px solid #fff;font-size:.7rem;color:#fff;font-weight:800}
+  .me{position:absolute;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:var(--info);border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.2)}
+  .check{display:flex;align-items:center;gap:.7rem;padding:.7rem 0;border-bottom:1px solid var(--line);font-size:.88rem;font-weight:600}
+  .cbox{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center;font-size:.8rem}
+  .cbox.on{background:var(--ok);border-color:var(--ok);color:#fff}
+  .step{display:flex;gap:.75rem;padding:.65rem 0}.step .num{width:26px;height:26px;border-radius:50%;background:var(--surface);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem;flex:none}.step.done .num{background:var(--ok);border-color:var(--ok);color:#fff}.step.cur .num{background:var(--primary);border-color:var(--primary);color:#fff}
+  .step .st{font-weight:600;font-size:.86rem}.step .sm{color:var(--muted);font-size:.74rem}
+  .photo{background:var(--surface);border:2px dashed var(--line);border-radius:14px;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:.82rem;gap:.3rem;margin-bottom:.8rem}
+  .big-ic{font-size:3rem;text-align:center;margin:1rem 0 .4rem}
+  .qrbox{width:200px;height:200px;border-radius:20px;margin:1.4rem auto;position:relative;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:4.5rem;color:#0f1a2e}
+  .qrbox::before,.qrbox::after{content:"";position:absolute;width:38px;height:38px;border:3px solid var(--primary)}
+  .qrbox::before{top:12px;left:12px;border-right:0;border-bottom:0}.qrbox::after{bottom:12px;right:12px;border-left:0;border-top:0}
+  .avatar{width:56px;height:56px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem}
+  .prof{display:flex;align-items:center;gap:.9rem;margin-bottom:1rem}.prof .nm{font-weight:700;font-size:1.05rem}.prof .rl{color:var(--muted);font-size:.8rem}
+  .toggle{display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--line);font-weight:600;font-size:.88rem}
+  .sw{width:40px;height:23px;border-radius:99px;background:#cdd6e6;position:relative;flex:none}.sw.on{background:var(--primary)}.sw::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.2s}.sw.on::after{left:19px}
+  .fabbtn{position:absolute;left:1rem;right:1rem;bottom:1rem;z-index:20}
+  /* accent switcher */
+  .accfab{position:fixed;right:1.4rem;bottom:1.4rem;background:#111c33;border:1px solid #26344f;border-radius:16px;padding:.7rem .9rem;box-shadow:0 12px 34px rgba(0,0,0,.5);z-index:999}
+  .accfab .lbl{color:#8592ad;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem}
+  .accfab .dots{display:flex;gap:.55rem}.accfab button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}.accfab button.on{border-color:#fff;box-shadow:0 0 0 2px #111c33 inset}
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>Motrix Saha <i>⚡</i> — Ops-App (Feldpersonal)</h1>
+  <p>App für Techniker / Saha-Ekibi: Aufgaben, Batterie-Swap, Rebalancing, Arıza-Meldung, QR-Locate. <b>Helles Theme</b> (Outdoor/Sonnenlicht-lesbar) mit Navy-Topbar + Rot. TR-lokalisiert. Rollen-gebunden (Techniker/Operator). 18 Screens.</p>
+  <span class="flag">☀️ Light-Theme (Feld)</span><span class="flag">🎨 Navy + Rot</span><span class="flag">🇹🇷 TR</span><span class="flag">👷 Rollen-gebunden</span><span class="flag">📱 18 Screens</span>
+</div>
+<div class="grp" id="grp"></div>
+
+<script>
+const tbsb=`<div class="tbsb"><span>9:41</span><span>●●● ⚡ ▮</span></div>`;
+const bike='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17.5" r="3"/><circle cx="18" cy="17.5" r="3"/><path d="M6 17.5l4.5-8.5H15M9 9h4l2.5 8.5"/></svg>';
+const hdr=(t,r='⋮')=>`<div class="tb">${tbsb}<div class="tbrow"><span class="ic">‹</span><b>${t}</b><span class="ic r">${r}</span></div></div>`;
+const hdrLogo=`<div class="tb">${tbsb}<div class="tbrow"><span class="brand">MOTRIX<i>⚡</i> Saha</span><span class="ic r">🔔</span></div></div>`;
+function mapBg(pins){return `<div class="map"><svg viewBox="0 0 300 600" preserveAspectRatio="xMidYMid slice" class="mapsvg"><rect width="300" height="600" fill="#dbe3f0"/><g stroke="#c3d0e4" stroke-width="15" fill="none" stroke-linecap="round"><path d="M-20 120 L120 260 L90 620"/><path d="M330 50 L180 300 L250 620"/><path d="M-20 430 L330 380"/></g><g stroke="#cdd8ea" stroke-width="6" fill="none"><path d="M-20 210 L330 175"/><path d="M40 -20 L90 620"/></g></svg>${pins||''}</div>`;}
+const pin=(x,y,c,g)=>`<div class="pin" style="left:${x}%;top:${y}%;background:${c}">${g||bike}</div>`;
+const C={ok:'#15a34a',warn:'#c77b0a',bad:'#dc2626',info:'#2563eb',red:'#E30A17'};
+
+const SCREENS=[
+/* ===== GİRİŞ & BUGÜN ===== */
+{g:0,cap:"01 · Saha Girişi",s:`<div class="scr"><div style="background:var(--navy);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center"><div class="brand" style="font-size:2rem">MOTRIX<i>⚡</i></div><p style="opacity:.8;margin:.3rem 0 2rem;font-size:.85rem">Saha Ekibi Girişi</p><div style="background:#fff;color:var(--ink);border-radius:20px 20px 0 0;padding:1.4rem;width:100%;margin-top:auto"><div class="lbl" style="margin-top:0">Personel ID / Telefon</div><div class="inp">TK-1042 · +90 5•• •••</div><div class="lbl">Şifre</div><div class="inp">••••••</div><div style="height:1rem"></div><button class="btn">Giriş Yap</button></div></div></div>`},
+{g:0,cap:"02 · Bugün (Dashboard)",s:`<div class="scr">${hdrLogo}<div class="ct"><div class="hello" style="color:var(--ink);margin-bottom:.9rem"><div class="s" style="color:var(--muted)">Merhaba,</div><div class="n">Ali R. · Millet Bahçeleri</div></div><div class="kpis"><div class="kpi"><div class="l">Bugünkü görev</div><div class="n red">6</div></div><div class="kpi"><div class="l">Tamamlanan</div><div class="n">2</div></div><div class="kpi"><div class="l">Acil</div><div class="n">1</div></div><div class="kpi"><div class="l">Vardiya</div><div class="n" style="font-size:1.1rem">08–16</div></div></div><div class="qa"><div class="qbtn red">⛶ QR Tara</div><div class="qbtn">🗺️ Harita</div></div><div class="sect">Sıradaki görev</div><div class="task"><div class="ic bat">🔋</div><div><div class="tt">Batarya değişimi · 3 bisiklet</div><div class="tm">Millet B. · &lt;%20</div></div><span class="ar">›</span></div></div></div>`},
+{g:0,cap:"05 · Harita (Araçlar)",s:`<div class="scr"><div style="position:relative;flex:1">${mapBg(pin(38,30,C.ok)+pin(70,38,C.warn)+pin(30,58,C.bad)+pin(58,66,C.ok)+pin(78,60,C.warn)+`<div class="me" style="left:50%;top:78%"></div>`)}${hdr('Yakındaki Araçlar','⚲')}<div style="position:absolute;left:.8rem;right:.8rem;bottom:.8rem;z-index:20;display:flex;gap:.5rem"><span class="pill p-ok" style="padding:.35rem .7rem">● Dolu</span><span class="pill p-warn" style="padding:.35rem .7rem">● Düşük</span><span class="pill p-bad" style="padding:.35rem .7rem">● Offline</span></div></div></div>`},
+{g:0,cap:"06 · QR Tara",s:`<div class="scr">${hdr('QR Kodu Tara')}<div class="ct center"><div class="qrbox">▦</div><p style="color:var(--muted);font-size:.88rem">Bisikletin gidonundaki QR'ı okut</p><div style="height:.8rem"></div><div class="inp" style="text-align:center">veya kod gir: <b style="color:var(--ink)">BK____</b></div></div></div>`},
+/* ===== GÖREVLER ===== */
+{g:1,cap:"03 · Görevlerim",s:`<div class="scr">${hdr('Görevlerim (6)')}<div class="ct">${[['bat','🔋','Batarya değişimi · 3 bisiklet','Millet B. · Acil','p-bad','Acil'],['reb','↻','Rebalancing · 4 bisiklet','Millet B. → Talas','p-info','Orta'],['rep','🔧','Fren tamiri · BK2145','Cumhuriyet Meydanı','p-warn','Yüksek'],['col','📦','Topla · offline BK1990','Kampüs','p-info','Orta'],['dep','✓','Devreye al · 5 bisiklet','Depo','p-ok','Düşük']].map(t=>`<div class="task"><div class="ic ${t[0]}">${t[1]}</div><div><div class="tt">${t[2]}</div><div class="tm">${t[3]}</div></div><span class="pill ${t[4]}" style="margin-left:auto">${t[5]}</span></div>`).join('')}</div></div>`},
+{g:1,cap:"04 · Görev Detayı",s:`<div class="scr"><div style="position:relative;height:180px">${mapBg(pin(45,55,C.warn)+`<div class="me" style="left:25%;top:75%"></div>`)}${hdr('Görev Detayı')}</div><div class="ct"><span class="pill p-bad">🔋 Batarya · Acil</span><div style="font-weight:800;font-size:1.15rem;margin:.5rem 0 .2rem">Batarya değişimi · 3 bisiklet</div><div style="color:var(--muted);font-size:.82rem;margin-bottom:.8rem">Millet Bahçeleri · 320 m uzakta</div><div class="card" style="margin-bottom:.8rem">${[['Bisiklet','BK2145 · %14'],['Bisiklet','BK2088 · %11'],['Bisiklet','BK2301 · %18']].map(k=>`<div class="kv"><span class="k">${k[0]}</span><b>${k[1]}</b></div>`).join('')}</div><div class="row2"><button class="btn navy">🧭 Navigasyon</button><button class="btn">Başla</button></div></div></div>`},
+{g:1,cap:"09 · Rebalancing",s:`<div class="scr">${hdr('Rebalancing')}<div class="ct"><div class="card" style="background:var(--navy);color:#fff;border:0"><div style="font-size:.78rem;opacity:.8">Öneri (talep + batarya)</div><div style="font-weight:700;margin-top:.2rem">Millet B. → Talas Kampüs</div><div style="font-size:.78rem;opacity:.8;margin-top:.2rem">4 bisiklet taşı · sabah talep zirvesi</div></div><div class="sect">Alınacak (Millet B.)</div>${['BK2145','BK2088','BK2301','BK2410'].map(b=>`<div class="check"><span class="cbox on">✓</span>${b}<span class="pill p-ok" style="margin-left:auto">alındı</span></div>`).slice(0,2).join('')}${['BK2301','BK2410'].map(b=>`<div class="check"><span class="cbox"></span>${b}<span style="margin-left:auto;color:var(--muted);font-size:.75rem">bekliyor</span></div>`).join('')}<div style="height:.8rem"></div><button class="btn">Teslim bölgesine yönlen</button></div></div>`},
+{g:1,cap:"12 · Navigasyon",s:`<div class="scr"><div style="position:relative;flex:1">${mapBg(pin(65,30,C.warn)+`<div class="me" style="left:30%;top:72%"></div>`)}<svg class="map" style="z-index:5" viewBox="0 0 300 600"><path d="M90 432 L140 330 L180 200 L195 185" stroke="var(--primary)" stroke-width="5" fill="none" stroke-linecap="round"/></svg>${hdr('Navigasyon')}<div style="position:absolute;left:.8rem;right:.8rem;bottom:.8rem;z-index:20;background:#fff;border-radius:14px;padding:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.15)"><div style="font-weight:700">320 m · 2 dk</div><div style="color:var(--muted);font-size:.8rem">BK2145 · Millet Bahçeleri girişi</div></div></div></div>`},
+{g:1,cap:"13 · Topla (Offline/Düşük)",s:`<div class="scr">${hdr('Toplanacak Araçlar')}<div class="ct">${[['BK1990','Offline · 3 gündür sinyal yok','Kampüs','p-bad'],['BK2050','Düşük batarya · %8','Sahabiye','p-warn'],['BK2199','Arıza bildirimi · fren','Cumhuriyet','p-bad']].map(b=>`<div class="task"><div class="ic col">${bike.replace('#fff','#0D1B3E')}</div><div><div class="tt">${b[0]}</div><div class="tm">${b[1]} · ${b[2]}</div></div><span class="pill ${b[3]}" style="margin-left:auto">topla</span></div>`).join('')}<div style="height:.4rem"></div><button class="btn navy">Rota oluştur (3 durak)</button></div></div>`},
+/* ===== ARAÇ & SERVİS ===== */
+{g:2,cap:"07 · Araç Detayı (Saha)",s:`<div class="scr">${hdr('BK2145 · Araç')}<div class="ct"><div class="card"><div class="kv"><span class="k">Durum</span><span class="pill p-warn">bakım</span></div><div class="kv"><span class="k">Batarya</span><b style="color:var(--bad)">%14</b></div><div class="kv"><span class="k">IMEI</span><b style="font-size:.78rem">863…854</b></div><div class="kv"><span class="k">Konum</span><b>Millet Bahçeleri</b></div><div class="kv"><span class="k">Son sinyal</span><b>12 sn önce</b></div></div><div class="sect">Saha Aksiyonları</div><div class="row2" style="gap:.6rem"><button class="btn ghost">🔓 Kilit Aç</button><button class="btn ghost">🔔 Bul (öttür)</button><button class="btn ghost">🔒 Kilitle</button><button class="btn ghost">🔧 Servis Modu</button></div><div style="height:.7rem"></div><button class="btn">⚠️ Arıza Bildir</button></div></div>`},
+{g:2,cap:"08 · Batarya Değişimi",s:`<div class="scr">${hdr('Batarya Değişimi')}<div class="ct"><div style="font-weight:800;font-size:1.05rem;margin-bottom:.2rem">BK2145</div><div style="color:var(--muted);font-size:.8rem;margin-bottom:1rem">Eski: %14 · Yeni pack hazır</div><div class="step done"><span class="num">✓</span><div><div class="st">Bisikleti bul & servis moduna al</div><div class="sm">Tamamlandı</div></div></div><div class="step done"><span class="num">✓</span><div><div class="st">Eski bataryayı çıkar</div><div class="sm">Seri: 48V-A210</div></div></div><div class="step cur"><span class="num">3</span><div><div class="st">Yeni bataryayı tak</div><div class="sm">Seri okut →</div></div></div><div class="step"><span class="num">4</span><div><div class="st">Doğrula & servis modundan çık</div></div></div><div style="height:.9rem"></div><button class="btn">Yeni batarya serisini okut</button></div></div>`},
+{g:2,cap:"10 · Arıza Bildir",s:`<div class="scr">${hdr('Arıza Bildir')}<div class="ct"><div style="font-weight:700;margin-bottom:.6rem">BK2145</div><div class="lbl" style="margin-top:0">Kategori</div><div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.3rem">${['Fren','Lastik','Far','Zil','Sele','Motor','Diğer'].map((c,i)=>`<span class="pill ${i===0?'p-bad':''}" style="padding:.4rem .7rem;border:1px solid var(--line);${i===0?'':'background:#fff;color:var(--muted)'}">${c}</span>`).join('')}</div><div class="lbl">Fotoğraf</div><div class="photo">📷<span>Fotoğraf ekle</span></div><div class="lbl" style="margin-top:0">Not</div><div class="inp" style="height:70px">Ön fren tutmuyor…</div><div style="height:.9rem"></div><button class="btn">Arızayı Gönder</button></div></div>`},
+{g:2,cap:"11 · Bakım Kontrol Listesi",s:`<div class="scr">${hdr('Bakım Kontrolü · BK2145')}<div class="ct">${[['Fren (ön/arka)',1],['Lastik basıncı',1],['Far & arka lamba',1],['Zil',0],['Sele & gidon',0],['Kilit mekanizması',0],['Batarya bağlantısı',1]].map(c=>`<div class="check"><span class="cbox ${c[1]?'on':''}">${c[1]?'✓':''}</span>${c[0]}</div>`).join('')}<div style="height:.9rem"></div><button class="btn green">Kontrolü Tamamla (4/7)</button></div></div>`},
+{g:2,cap:"14 · Bisiklet Devreye Al",s:`<div class="scr">${hdr('Devreye Al')}<div class="ct"><div class="step done"><span class="num">✓</span><div><div class="st">QR okut</div><div class="sm">BK2410</div></div></div><div class="step done"><span class="num">✓</span><div><div class="st">Park bölgesine yerleştir</div><div class="sm">Millet Bahçeleri · konum onaylandı</div></div></div><div class="step cur"><span class="num">3</span><div><div class="st">Fotoğraf çek</div></div></div><div class="photo">📷<span>Yerleştirme fotoğrafı</span></div><button class="btn">Aktif Et (kullanıma aç)</button></div></div>`},
+{g:2,cap:"15 · Görev Tamamlandı",s:`<div class="scr">${hdr('')}<div class="ct center"><div class="big-ic" style="color:var(--ok)">✅</div><div style="font-weight:800;font-size:1.2rem">Görev Tamamlandı</div><p style="color:var(--muted);font-size:.85rem;margin:.4rem 1rem 1rem">Batarya değişimi · 3 bisiklet · Millet B.</p><div class="card" style="width:100%"><div class="kv"><span class="k">Süre</span><b>18 dk</b></div><div class="kv"><span class="k">Fotoğraf</span><b>3 ✓</b></div></div><button class="btn">Sıradaki göreve geç</button></div></div>`},
+/* ===== VARDİYA & KONTO ===== */
+{g:3,cap:"16 · Vardiyam",s:`<div class="scr">${hdr('Vardiyam')}<div class="ct"><div class="card" style="background:var(--navy);color:#fff;border:0"><div style="font-size:.78rem;opacity:.8">Bugün · 08:00–16:00</div><div style="font-size:1.6rem;font-weight:800;margin-top:.2rem">6 / 8 görev</div></div><div class="kpis"><div class="kpi"><div class="l">Tamamlanan</div><div class="n">6</div></div><div class="kpi"><div class="l">Batarya swap</div><div class="n">9</div></div><div class="kpi"><div class="l">Mesafe</div><div class="n" style="font-size:1.2rem">14 km</div></div><div class="kpi"><div class="l">Aktif süre</div><div class="n" style="font-size:1.2rem">5s 20d</div></div></div><button class="btn ghost">Vardiya geçmişi</button></div></div>`},
+{g:3,cap:"17 · Profil",s:`<div class="scr">${hdr('Profil')}<div class="ct"><div class="prof"><div class="avatar">AR</div><div><div class="nm">Ali R.</div><div class="rl">Saha Teknisyeni · TK-1042</div></div></div><div class="card">${[['Bölge','Millet Bahçeleri'],['Rol','Teknisyen'],['Yetkiler','Swap · Tamir · Devreye al'],['Ekip Lideri','Emre K.']].map(k=>`<div class="kv"><span class="k">${k[0]}</span><b style="font-size:.82rem">${k[1]}</b></div>`).join('')}</div><button class="btn ghost">Çıkış Yap</button></div></div>`},
+{g:3,cap:"18 · Ayarlar",s:`<div class="scr">${hdr('Ayarlar')}<div class="ct"><div class="sect">Bildirimler</div><div class="toggle">Yeni görev bildirimi <span class="sw on"></span></div><div class="toggle">Acil uyarılar <span class="sw on"></span></div><div class="sect">Uygulama</div><div class="toggle">Konumu arka planda paylaş <span class="sw on"></span></div><div class="toggle">Offline mod (senkron sonra) <span class="sw"></span></div><div class="kv" style="margin-top:.6rem"><span class="k">Dil</span><b>Türkçe ›</b></div><div class="kv"><span class="k">Sürüm</span><b>v0.9 (beta)</b></div></div></div>`}
+];
+const GROUPS=["Giriş · Bugün · Harita","Görevler","Araç & Servis","Vardiya · Konto"];
+let html='';
+GROUPS.forEach((g,gi)=>{
+  html+=`<h2>${g}</h2><div class="gallery">`;
+  SCREENS.filter(s=>s.g===gi).forEach(s=>{
+    html+=`<div><div class="frame"><div class="notch"></div>${s.s}</div><div class="cap">${s.cap}</div></div>`;
+  });
+  html+=`</div>`;
+});
+document.getElementById('grp').innerHTML=html;
+
+/* accent switcher */
+const PALS=[["#E30A17","#ff3d4a","Motrix Rot"],["#0D1B3E","#24427a","Navy"],["#1cad6e","#22c98a","Grün"],["#0d9488","#14b8a6","Teal"],["#2563eb","#3b82f6","Mavi"],["#7c3aed","#9361f0","Mor"]];
+const fab=document.createElement('div');fab.className='accfab';
+fab.innerHTML=`<div class="lbl">Akzent · White-Label</div><div class="dots">${PALS.map((p,i)=>`<button data-c="${p[0]}" data-c2="${p[1]}" title="${p[2]}" class="${i?'':'on'}" style="background:${p[0]}"></button>`).join('')}</div>`;
+document.body.appendChild(fab);
+fab.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;fab.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const r=document.documentElement.style;r.setProperty('--primary',b.dataset.c);r.setProperty('--primary-2',b.dataset.c2);});
+</script>
+</body>
+</html>
