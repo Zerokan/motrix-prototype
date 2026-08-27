@@ -55,6 +55,15 @@
       <span class="chip" data-f="warn"><span class="d" style="background:var(--warn)"></span>Düşük</span>
       <span class="chip" data-f="bad"><span class="d" style="background:var(--bad)"></span>Çevrimdışı</span>
     </div>
+    <span style="width:1px;height:22px;background:rgba(255,255,255,.15);margin:0 .2rem"></span>
+    <span style="color:#8ea0c6;font-size:.72rem;font-weight:700">Altlık:</span>
+    <div class="chips" id="basemaps">
+      <span class="chip on" data-b="osm">OSM</span>
+      <span class="chip" data-b="gmap">Google</span>
+      <span class="chip" data-b="gsat">Google Uydu</span>
+      <span class="chip" data-b="carto" title="Mapbox benzeri modern vektör görünüm (önizleme: Carto — gerçek Mapbox API anahtarı gerektirir)">Mapbox-stil</span>
+      <span class="chip" data-b="dark">Koyu</span>
+    </div>
   </div>
   <div style="position:relative">
     <div id="map"></div>
@@ -77,9 +86,17 @@
 const COL={ok:'#15a34a',trip:'#2563eb',warn:'#c77b0a',bad:'#dc2626'};
 const GLY={ok:'⚡',trip:'▶',warn:'🔋',bad:'!'};
 const map=L.map('map',{zoomControl:true}).setView([38.7225,35.4820],14);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19, attribution:'© OpenStreetMap'
-}).addTo(map);
+const BASEMAPS={
+  osm:{u:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',o:{maxZoom:19,attribution:'© OpenStreetMap'}},
+  gmap:{u:'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',o:{maxZoom:20,subdomains:['0','1','2','3'],attribution:'© Google (önizleme)'}},
+  gsat:{u:'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',o:{maxZoom:20,subdomains:['0','1','2','3'],attribution:'© Google (önizleme)'}},
+  carto:{u:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',o:{maxZoom:19,attribution:'© Esri (Mapbox-önizleme)'}},
+  dark:{u:'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',o:{maxZoom:16,attribution:'© Esri'}}
+};
+let baseLayer=L.tileLayer(BASEMAPS.osm.u,BASEMAPS.osm.o).addTo(map);
+function setBase(k){if(baseLayer)map.removeLayer(baseLayer);baseLayer=L.tileLayer(BASEMAPS[k].u,BASEMAPS[k].o);baseLayer.addTo(map);if(baseLayer.bringToBack)baseLayer.bringToBack();}
+document.getElementById('basemaps').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;document.querySelectorAll('#basemaps .chip').forEach(x=>x.classList.toggle('on',x===c));setBase(c.dataset.b);});
+const _b=new URLSearchParams(location.search).get('base');if(_b&&BASEMAPS[_b]){setBase(_b);document.querySelectorAll('#basemaps .chip').forEach(x=>x.classList.toggle('on',x.dataset.b===_b));}
 
 // --- Geofence zones ---
 const service=L.polygon([[38.7290,35.4720],[38.7300,35.4930],[38.7150,35.4950],[38.7135,35.4740]],
