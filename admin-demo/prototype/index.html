@@ -121,7 +121,7 @@ const arrow=d=>/^-/.test(d)?`<span class="d down">▼ ${d.slice(1)}</span>`:`<sp
 function pDashboard(p){const cfg=CFG[p[0]]||{};
   const k=cfg.k||[["Bikes online","56","+2"],["Aktive Fahrten","8","+3"],["Umsatz heute","₺2.480","+12%"],["Ø Batterie","76%","-4%"],["Auslastung","62%","+8%"]];
   return `<div class="grid kpis">${k.map(x=>`<div class="card kpi"><span class="l">${x[0]}</span><span class="n">${x[1]}</span>${x[2]?arrow(x[2]):''}</div>`).join('')}</div>
-  <div class="row r-2"><div class="card"><div class="ch"><h3>${p[1]} · Verlauf</h3></div><div class="pad" data-chart="rev"></div></div>
+  <div class="row r-2"><div class="card"><div class="ch"><h3><span>${p[1]}</span> · <span>Verlauf</span></h3></div><div class="pad" data-chart="rev"></div></div>
   <div class="card"><div class="ch"><h3>Verteilung</h3></div><div class="pad" data-chart="bar"></div></div></div>
   <div class="row"><div class="card"><div class="ch"><h3>Letzte Aktivität</h3></div>${tableFleet(6)}</div></div>`;
 }
@@ -449,19 +449,86 @@ function go(id){const p=PAGEMAP[id];if(!p)return;const pg=[p[0],p[1],p[2]];
   document.querySelectorAll('[data-chart="rev"]').forEach(el=>area(el,[120,140,135,160,175,150,190,210,185,220,205,240,235,268],getComputedStyle(document.documentElement).getPropertyValue('--primary')));
   document.querySelectorAll('[data-chart="bar"]').forEach(el=>bars(el,[8,12,6,15,10,18,9,14],getComputedStyle(document.documentElement).getPropertyValue('--navy')));
   if(p[2]==='map')initMap();
-  const dt=document.getElementById('dtabs');if(dt)dt.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;dt.querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');const tp=a.dataset.tab;if(tp){const pnl=document.getElementById('dpanels');if(pnl)pnl.querySelectorAll('[data-panel]').forEach(pl=>pl.style.display=pl.dataset.panel===tp?'':'none');if(tp==='loc'){initMap();}}});
+  const dt=document.getElementById('dtabs');if(dt)dt.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;dt.querySelectorAll('a').forEach(x=>x.classList.remove('on'));a.classList.add('on');const tp=a.dataset.tab;if(tp){const pnl=document.getElementById('dpanels');if(pnl)pnl.querySelectorAll('[data-panel]').forEach(pl=>pl.style.display=pl.dataset.panel===tp?'':'none');if(tp==='loc'){initMap();}translate(document.getElementById('view'),curLang);}});
+  if(typeof curLang!=='undefined')translate(document.querySelector('.main'),curLang);
   window.scrollTo(0,0);
 }
 document.getElementById('nav').addEventListener('click',e=>{const a=e.target.closest('.sub a');if(a){go(a.dataset.p);return;}const h=e.target.closest('.mh');if(h)h.parentElement.classList.toggle('open');});
 
-/* ============ i18n (nav/module level; deep i18n via CMS) ============ */
-const TR={ // [en, tr]
- "Dashboard":["Dashboard","Kontrol Paneli"],"Vehicles / Fleet":["Vehicles / Fleet","Araçlar / Filo"],"Live-Map":["Live Map","Canlı Harita"],"Geofences":["Geofences","Bölgeler"],"Rides / Rentals":["Rides / Rentals","Sürüşler / Kiralamalar"],"Customers / Users":["Customers / Users","Müşteriler / Kullanıcılar"],"Pricing":["Pricing","Fiyatlandırma"],"Billing & Payments":["Billing & Payments","Faturalama & Ödemeler"],"Field Operations":["Field Operations","Saha Operasyonları"],"Reports & BI":["Reports & BI","Raporlar & BI"],"Marketing / CRM":["Marketing / CRM","Pazarlama / CRM"],"Support & Safety":["Support & Safety","Destek & Güvenlik"],"Compliance / City":["Compliance / City","Uyumluluk / Şehir"],"White-Label / Tenants":["White-Label / Tenants","White-Label / Kiracılar"],"Administration":["Administration","Yönetim"]
+/* ============ i18n — echter Text-Knoten-Übersetzer, Standard TR ============ */
+/* Werte: [tr, en]. Schlüssel = exakter deutscher Quell-String. */
+const I18N={
+ // Module
+ "Dashboard":["Kontrol Paneli","Dashboard"],"Vehicles / Fleet":["Araçlar / Filo","Vehicles / Fleet"],"Live-Map":["Canlı Harita","Live Map"],"Geofences":["Bölgeler","Geofences"],"Rides / Rentals":["Sürüşler / Kiralamalar","Rides / Rentals"],"Customers / Users":["Müşteriler / Kullanıcılar","Customers / Users"],"Pricing":["Fiyatlandırma","Pricing"],"Billing & Payments":["Faturalama & Ödemeler","Billing & Payments"],"Field Operations":["Saha Operasyonları","Field Operations"],"Reports & BI":["Raporlar & BI","Reports & BI"],"Marketing / CRM":["Pazarlama / CRM","Marketing / CRM"],"Support & Safety":["Destek & Güvenlik","Support & Safety"],"Compliance / City":["Uyumluluk / Şehir","Compliance / City"],"White-Label / Tenants":["White-Label / Kiracılar","White-Label / Tenants"],"Administration":["Yönetim","Administration"],
+ // Dashboard-Seiten
+ "Fleet Dashboard":["Filo Panosu","Fleet Dashboard"],"Live-Ops-Snapshot":["Canlı Operasyon","Live-Ops Snapshot"],"Alerts / Radar":["Uyarılar / Radar","Alerts / Radar"],"Revenue-Snapshot":["Gelir Özeti","Revenue Snapshot"],"Ops-Health":["Sistem Sağlığı","Ops Health"],"Saved-Views":["Kayıtlı Görünümler","Saved Views"],
+ // Vehicles
+ "Vehicle-Liste":["Araç Listesi","Vehicle List"],"Vehicle-Detail":["Araç Detayı","Vehicle Detail"],"Vehicle Create/Edit":["Araç Oluştur/Düzenle","Vehicle Create/Edit"],"Bulk-Import / Provisioning":["Toplu İçe Aktarma","Bulk Import"],"Vehicle-Types":["Araç Tipleri","Vehicle Types"],"Type Create":["Tip Oluştur","Type Create"],"IoT-Module":["IoT Modülleri","IoT Modules"],"IoT-Detail":["IoT Detayı","IoT Detail"],"IoT-Assign":["IoT Ata","IoT Assign"],"Firmware / OTA":["Firmware / OTA","Firmware / OTA"],"Battery & Charging":["Batarya & Şarj","Battery & Charging"],"Command-Console":["Komut Konsolu","Command Console"],"Attribute-Groups":["Öznitelik Grupları","Attribute Groups"],"Vehicle-Cards (RFID)":["Araç Kartları (RFID)","Vehicle Cards (RFID)"],
+ // Geofences
+ "Zonen-Map/Editor":["Bölge Haritası/Editör","Zone Map/Editor"],"Zonen-Liste":["Bölge Listesi","Zone List"],"Zone-Create":["Bölge Oluştur","Zone Create"],"Area-Types":["Alan Tipleri","Area Types"],"Zone-Simulation":["Bölge Simülasyonu","Zone Simulation"],"Stations":["İstasyonlar","Stations"],"Station-Create":["İstasyon Oluştur","Station Create"],"Physical-Stations/Slots":["Fiziksel İstasyonlar/Yuvalar","Physical Stations/Slots"],
+ // Rides
+ "Active-Rides":["Aktif Sürüşler","Active Rides"],"Ride-History":["Sürüş Geçmişi","Ride History"],"Ride-Detail":["Sürüş Detayı","Ride Detail"],"Bookings":["Rezervasyonlar","Bookings"],"Booking-Kalender":["Rezervasyon Takvimi","Booking Calendar"],"Booking-Create":["Rezervasyon Oluştur","Booking Create"],"Disputes":["İtirazlar","Disputes"],"Dispute-Detail":["İtiraz Detayı","Dispute Detail"],"Refunds":["İadeler","Refunds"],"Rental-Additions":["Kiralama Ekleri","Rental Additions"],
+ // Users
+ "Rider-Liste":["Sürücü Listesi","Rider List"],"Rider-Detail":["Sürücü Detayı","Rider Detail"],"Rider Create/Edit":["Sürücü Oluştur/Düzenle","Rider Create/Edit"],"KYC / Verification-Queue":["KYC / Doğrulama Kuyruğu","KYC / Verification Queue"],"Media-Review":["Medya İncelemesi","Media Review"],"Identity-Cards (RFID)":["Kimlik Kartları (RFID)","Identity Cards (RFID)"],"Business-Accounts":["Kurumsal Hesaplar","Business Accounts"],"Business-Detail":["Kurumsal Detay","Business Detail"],"Blacklist / Risk":["Kara Liste / Risk","Blacklist / Risk"],
+ // Pricing
+ "Pricing-Bundles":["Fiyat Paketleri","Pricing Bundles"],"Bundle-Detail/Versionen":["Paket Detayı/Sürümler","Bundle Detail/Versions"],"Bundle Create/Edit":["Paket Oluştur/Düzenle","Bundle Create/Edit"],"Pricing-Calculator":["Fiyat Hesaplayıcı","Pricing Calculator"],"Pricing-Simulator":["Fiyat Simülatörü","Pricing Simulator"],"Packages":["Paketler","Packages"],"Subscriptions":["Abonelikler","Subscriptions"],
+ // Billing
+ "Transactions":["İşlemler","Transactions"],"Wallets/Balances":["Cüzdanlar/Bakiyeler","Wallets/Balances"],"Invoices":["Faturalar","Invoices"],"Invoice-Detail":["Fatura Detayı","Invoice Detail"],"Invoice-Create":["Fatura Oluştur","Invoice Create"],"Collections/Dunning":["Tahsilat/Hatırlatma","Collections/Dunning"],"Fines/Penalties":["Cezalar","Fines/Penalties"],"Payouts/Settlement":["Ödemeler/Mutabakat","Payouts/Settlement"],"Payment-Gateways (ZeroPay)":["Ödeme Ağ Geçitleri (ZeroPay)","Payment Gateways (ZeroPay)"],"Revenue-Centers":["Gelir Merkezleri","Revenue Centers"],"e-Fatura / Uyumsoft [TR]":["e-Fatura / Uyumsoft [TR]","e-Fatura / Uyumsoft [TR]"],
+ // Field Ops
+ "Task-Board":["Görev Panosu","Task Board"],"Task-Liste":["Görev Listesi","Task List"],"Task-Create":["Görev Oluştur","Task Create"],"Task-Templates":["Görev Şablonları","Task Templates"],"Rebalancing":["Rebalancing","Rebalancing"],"Battery-Swap":["Batarya Değişimi","Battery Swap"],"Maintenance-Tickets":["Bakım Talepleri","Maintenance Tickets"],"Ticket-Detail":["Talep Detayı","Ticket Detail"],"Damage-Reports":["Hasar Raporları","Damage Reports"],"Service-Workers":["Saha Teknisyenleri","Service Workers"],"Routes/Dispatch":["Rotalar/Sevkiyat","Routes/Dispatch"],"Warehouse/Parts":["Depo/Parçalar","Warehouse/Parts"],
+ // Reports
+ "Revenue-Reports":["Gelir Raporları","Revenue Reports"],"Utilization":["Kullanım","Utilization"],"Heatmaps":["Isı Haritaları","Heatmaps"],"Insights":["İçgörüler","Insights"],"Timeline":["Zaman Çizelgesi","Timeline"],"CO₂ / ESG":["CO₂ / ESG","CO₂ / ESG"],"Municipal-Transparency":["Belediye Şeffaflığı","Municipal Transparency"],"Custom-Dashboards":["Özel Panolar","Custom Dashboards"],"Data-Exports":["Veri Dışa Aktarma","Data Exports"],
+ // Marketing
+ "Campaigns":["Kampanyalar","Campaigns"],"Push-Create":["Push Oluştur","Push Create"],"Banner-Ads":["Banner Reklamlar","Banner Ads"],"Banner-Create":["Banner Oluştur","Banner Create"],"Email/SMS-Campaign":["E-posta/SMS Kampanyası","Email/SMS Campaign"],"Promotions/Vouchers":["Promosyonlar/Kuponlar","Promotions/Vouchers"],"Voucher-Create":["Kupon Oluştur","Voucher Create"],"Referral-Programm":["Davet Programı","Referral Program"],"Loyalty/Rewards":["Sadakat/Ödüller","Loyalty/Rewards"],"Notification-Channels":["Bildirim Kanalları","Notification Channels"],"In-App-Content/Tutorials":["Uygulama İçi İçerik","In-App Content"],
+ // Support
+ "Ticket-Inbox":["Talep Kutusu","Ticket Inbox"],"Lost/Stolen-Recovery":["Kayıp/Çalıntı Kurtarma","Lost/Stolen Recovery"],"Safety-Events":["Güvenlik Olayları","Safety Events"],"Abuse/Fraud-Flags":["Kötüye Kullanım/Dolandırıcılık","Abuse/Fraud Flags"],"Community-Reports":["Topluluk Bildirimleri","Community Reports"],"Issues":["Sorunlar","Issues"],"SOS/Emergency-Log":["SOS/Acil Durum Kaydı","SOS/Emergency Log"],
+ // Compliance
+ "GBFS-Feeds":["GBFS Feed'leri","GBFS Feeds"],"MDS-Feeds":["MDS Feed'leri","MDS Feeds"],"Policy-Management":["Politika Yönetimi","Policy Management"],"Permits/Caps":["İzinler/Limitler","Permits/Caps"],"Municipal-Reporting":["Belediye Raporlama","Municipal Reporting"],"Audit-Log (KVKK)":["Denetim Kaydı (KVKK)","Audit Log (KVKK)"],"Terms&Conditions":["Şartlar & Koşullar","Terms & Conditions"],"Data/Privacy":["Veri/Gizlilik","Data/Privacy"],
+ // White-Label
+ "Tenants/Städte":["Kiracılar/Şehirler","Tenants/Cities"],"Tenant-Detail":["Kiracı Detayı","Tenant Detail"],"Branding/Theme":["Marka/Tema","Branding/Theme"],"Feature-Flags/Settings":["Özellik Bayrakları/Ayarlar","Feature Flags/Settings"],"App-Configuration":["Uygulama Yapılandırması","App Configuration"],"Message/Translation-Mgmt":["Mesaj/Çeviri Yönetimi","Message/Translation Mgmt"],"MaaS-Clients":["MaaS İstemcileri","MaaS Clients"],
+ // Administration
+ "Staff/Team":["Personel/Ekip","Staff/Team"],"Staff-Detail":["Personel Detayı","Staff Detail"],"Invite":["Davet Et","Invite"],"Roles & Permissions":["Roller & İzinler","Roles & Permissions"],"Role-Create":["Rol Oluştur","Role Create"],"API-Keys":["API Anahtarları","API Keys"],"Webhooks":["Webhook'lar","Webhooks"],"Integrations":["Entegrasyonlar","Integrations"],"General-Settings":["Genel Ayarlar","General Settings"],"My-Profile / 2FA":["Profilim / 2FA","My Profile / 2FA"],
+ // Chrome / KPIs / Buttons / Status
+ "Verteilung":["Dağılım","Distribution"],"Letzte Aktivität":["Son Aktivite","Recent Activity"],"Bikes online":["Çevrimiçi bisiklet","Bikes online"],"Aktive Fahrten":["Aktif Sürüşler","Active rides"],"Umsatz heute":["Bugünkü Gelir","Revenue today"],"Ø Batterie":["Ort. Batarya","Avg battery"],"Auslastung":["Doluluk","Utilization"],"Batterie":["Batarya","Battery"],"Status":["Durum","Status"],"Actions":["İşlemler","Actions"],"Zone":["Bölge","Zone"],"Alle":["Tümü","All"],"Aktiv":["Aktif","Active"],"Filter ▾":["Filtre ▾","Filter ▾"],"+ Neu":["+ Yeni","+ New"],"⤓ Export":["⤓ Dışa Aktar","⤓ Export"],"Speichern":["Kaydet","Save"],"Entwurf":["Taslak","Draft"],"Bearbeiten":["Düzenle","Edit"],"Aktion":["İşlem","Action"],"Info":["Bilgi","Info"],
+ "available":["müsait","available"],"on-trip":["sürüşte","on-trip"],"maintenance":["bakımda","maintenance"],"offline":["çevrimdışı","offline"],"verified":["doğrulandı","verified"],"pending":["bekliyor","pending"],"flagged":["işaretli","flagged"],"aktiv":["aktif","active"],"offen":["açık","open"],"wartet":["bekliyor","waiting"],"live":["canlı","live"],"riding":["sürüşte","riding"],"slow-zone":["yavaş bölge","slow-zone"],"closed":["kapandı","closed"],"in Arbeit":["işlemde","in progress"],"erledigt":["tamamlandı","done"],"bezahlt":["ödendi","paid"],
+ // Detail tabs / common labels
+ "Übersicht":["Genel Bakış","Overview"],"Historie":["Geçmiş","History"],"Aktivität":["Aktivite","Activity"],"Abrechnung":["Faturalama","Billing"],"Notizen":["Notlar","Notes"],"Telemetrie":["Telemetri","Telemetry"],"Command-Log":["Komut Kaydı","Command Log"],"Wartung":["Bakım","Maintenance"],"Schäden":["Hasarlar","Damages"],"Standort":["Konum","Location"],"Event-Log":["Olay Kaydı","Event Log"],
+ "Name":["Ad","Name"],"Beschreibung":["Açıklama","Description"],"Tenant":["Kiracı","Tenant"],"Name / Bezeichnung":["Ad / Tanım","Name / Label"],"Aktiviert":["Etkin","Enabled"],"Sichtbar in App":["Uygulamada Görünür","Visible in App"],"Modell":["Model","Model"],"Datum":["Tarih","Date"],"Typ":["Tip","Type"],"Techniker":["Teknisyen","Technician"],"Zeit":["Zaman","Time"],"Command":["Komut","Command"],"Ergebnis":["Sonuç","Result"],"Priorität":["Öncelik","Priority"],
+ // Geofence-Editor
+ "Satellit ▾":["Uydu ▾","Satellite ▾"],"Neue Zone anlegen":["Yeni Bölge Oluştur","Create New Zone"],"Service":["Servis","Service"],"Parking":["Park","Parking"],"No-Ride":["Yasak","No-Ride"],"Slow":["Yavaş","Slow"],"Custom":["Özel","Custom"],"Tenant / Fleet":["Kiracı / Filo","Tenant / Fleet"],"Bei Verlassen der Zone:":["Bölgeden çıkışta:","On leaving the zone:"],"⚙ Speed drosseln (S7)":["⚙ Hız kısma (S7)","⚙ Throttle speed (S7)"],"🔊 Alarm-Ton (V0)":["🔊 Alarm sesi (V0)","🔊 Alarm sound (V0)"],"🔒 Pause & Lock-on-Stop":["🔒 Duraklat & Durunca Kilitle","🔒 Pause & Lock-on-Stop"],"Zone speichern":["Bölgeyi Kaydet","Save Zone"],
+ // Municipal
+ "CO₂ (Jahr)":["CO₂ (Yıl)","CO₂ (Year)"],"Auto-Fahrten ersetzt":["Araba yolculukları yerine","Car trips replaced"],"Aktive Bürger":["Aktif Vatandaş","Active citizens"],"Ø Fahrten/Tag":["Ort. Sürüş/Gün","Avg rides/day"],"Stadt-Abdeckung":["Şehir Kapsamı","City coverage"],"Nutzung · Stadtteile":["Kullanım · Mahalleler","Usage · Districts"],"Compliance & SLA":["Uyumluluk & SLA","Compliance & SLA"],"KVKK-Datenresidenz":["KVKK Veri Yeri","KVKK Data Residency"],"GBFS-Feed":["GBFS Feed","GBFS Feed"],"Uptime-SLA":["Çalışma Süresi SLA","Uptime SLA"],"Fahrzeug-Cap":["Araç Limiti","Vehicle Cap"],"genehmigt":["onaylı","approved"],
+ // Pricing
+ "Bundle-Name":["Paket Adı","Bundle Name"],"Währung":["Para Birimi","Currency"],"Unlock-Gebühr":["Kilit Açma Ücreti","Unlock Fee"],"Preis / Minute":["Dakika Ücreti","Price / Minute"],"Frei-Minuten":["Ücretsiz Dakika","Free Minutes"],"Pause / Minute":["Duraklama / Dakika","Pause / Minute"],"Max / Fahrt (Cap)":["Maks / Sürüş (Limit)","Max / Ride (Cap)"],"Tages-Cap":["Günlük Limit","Daily Cap"],"Bundle veröffentlichen":["Paketi Yayınla","Publish Bundle"],"Beispiel-Rechnung":["Örnek Hesaplama","Sample Calculation"],
+ // Reports
+ "Top-Zonen":["En İyi Bölgeler","Top Zones"],"Zahlungsart":["Ödeme Yöntemi","Payment Method"],"Export":["Dışa Aktar","Export"],
+ "Verlauf":["Trend","Trend"],"Available":["Müsait","Available"],"On-Trip":["Sürüşte","On-Trip"],"Kunde":["Müşteri","Customer"],"Fahrzeug":["Araç","Vehicle"],
+ // Deck-Screen Titel / Notizen / Sektionen (komplette Text-Knoten)
+ "Zonen-Editor · Kayseri":["Bölge Editörü · Kayseri","Zone Editor · Kayseri"],
+ "Enforcement über den getesteten Gateway (S7/V0). Kein Hard-Lock in Fahrt.":["Zorlama, test edilmiş gateway üzerinden (S7/V0). Sürüşte kilitleme yok.","Enforcement via the tested gateway (S7/V0). No hard-lock while riding."],
+ "Batterie · 24 h":["Batarya · 24 s","Battery · 24 h"],"Command-Console":["Komut Konsolu","Command Console"],
+ "Safe-Actuation: Immobilize nur bei Speed 0. Async-Confirm über Rück-Event.":["Güvenli tetikleme: immobilize yalnızca hız 0'da. Geri-olayla asenkron onay.","Safe actuation: immobilize only at speed 0. Async confirm via return event."],
+ "Tarif-Bundle · Kayseri Standard":["Tarife Paketi · Kayseri Standart","Tariff Bundle · Kayseri Standard"],
+ "Tarif-Variablen (pro Tenant konfigurierbar)":["Tarife Değişkenleri (kiracı bazlı ayarlanabilir)","Tariff Variables (per tenant)"],
+ "1:1 an die getestete pricing.ts-Engine verdrahtet. Whitelabel-Betreiber definiert diese Werte selbst.":["Test edilmiş pricing.ts motoruna 1:1 bağlı. White-label işletmeci bu değerleri kendi belirler.","Wired 1:1 to the tested pricing.ts engine. The white-label operator sets these values."],
+ "Beispiel-Rechnung":["Örnek Hesaplama","Sample Calculation"],
+ "Umsatz · 30 Tage":["Gelir · 30 Gün","Revenue · 30 Days"],"Fahrten nach Stunde":["Saate göre sürüşler","Rides by hour"],
+ "CSV · XLSX · PDF · GBFS-Feed · Municipal-Report (KayBis)":["CSV · XLSX · PDF · GBFS-Feed · Belediye Raporu (KayBis)","CSV · XLSX · PDF · GBFS feed · Municipal report (KayBis)"],
+ "CO₂-Einsparung · monatlich":["CO₂ Tasarrufu · aylık","CO₂ Savings · monthly"],"CO₂-Einsparung · Verlauf":["CO₂ Tasarrufu · Trend","CO₂ Savings · Trend"],
+ "🏛 Municipal-Transparency · Kayseri Büyükşehir Belediyesi — Read-Only-Zugang für die Stadt":["🏛 Belediye Şeffaflığı · Kayseri Büyükşehir Belediyesi — Şehir için salt-okunur erişim","🏛 Municipal Transparency · Kayseri Metropolitan Municipality — Read-only access for the city"],
+ "Nutzung · Stadtteile":["Kullanım · Mahalleler","Usage · Districts"],
+ "Umsatz (30 T)":["Gelir (30 G)","Revenue (30d)"],"Fahrten (30 T)":["Sürüşler (30 G)","Rides (30d)"],"Ø Umsatz/Fahrt":["Ort. Gelir/Sürüş","Avg revenue/ride"],"Aktive Rider":["Aktif Sürücü","Active riders"],
+ "Speed":["Hız","Speed"],"Gesamt-km":["Toplam km","Total km"],"Trip-km":["Sürüş km","Trip km"],"Ladung":["Şarj","Charging"],"Payload":["Veri","Payload"],"QR-Nr":["QR-No","QR No"],"Tenant / Zone":["Kiracı / Bölge","Tenant / Zone"],"Last seen":["Son görülme","Last seen"],
+ "500 / 500 genehmigt":["500 / 500 onaylı","500 / 500 approved"],"G7 (neu)":["G7 (yeni)","G7 (new)"],"vor 12 s":["12 sn önce","12 s ago"],"Zugeordnetes Bike":["Atanmış Bisiklet","Assigned Bike"],"nein":["hayır","no"],"Firmware":["Firmware","Firmware"],"Ergebnis · OK":["Sonuç · OK","Result · OK"]
 };
-function applyLang(l){const idx=l==='en'?0:l==='tr'?1:-1;
-  document.querySelectorAll('.mod .mn').forEach(el=>{if(el.dataset.o===undefined)el.dataset.o=el.textContent;const o=el.dataset.o;el.textContent=idx<0?o:(TR[o]?TR[o][idx]:o);});
+let curLang='tr';
+function _t(s,l){const k=s.trim();if(l==='de'||!k)return s;const e=I18N[k];if(!e)return s;const v=l==='tr'?e[0]:e[1];return v!==undefined?s.replace(k,v):s;}
+function walkT(n,l){if(n.nodeType===3){if(n.__s===undefined)n.__s=n.nodeValue;n.nodeValue=_t(n.__s,l);return;}if(n.nodeType===1&&n.tagName!=='SCRIPT'&&n.tagName!=='STYLE'){for(const c of n.childNodes)walkT(c,l);}}
+function translate(root,l){if(root)walkT(root,l);}
+function applyLang(l){curLang=l;translate(document.querySelector('.app'),l);
   const N={de:['🇩🇪','Deutsch'],en:['🇬🇧','English'],tr:['🇹🇷','Türkçe']};document.getElementById('langflag').textContent=N[l][0];document.getElementById('langname').textContent=N[l][1];
-  document.querySelectorAll('#langmenu button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));}
+  document.querySelectorAll('#langmenu button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+  const ph={de:'Suche…',en:'Search…',tr:'Ara…'}[l];document.querySelectorAll('.search').forEach(s=>{if(s.hasAttribute('placeholder'))s.placeholder=ph;});}
 const dd=document.getElementById('langdd');
 document.getElementById('langtrig').addEventListener('click',e=>{e.stopPropagation();dd.classList.toggle('open');});
 document.getElementById('langmenu').addEventListener('click',e=>{const b=e.target.closest('button');if(b){applyLang(b.dataset.l);dd.classList.remove('open');}});
@@ -471,7 +538,14 @@ function setAccent(c,c2){const r=document.documentElement.style;r.setProperty('-
 const APALS=[["#E30A17","#ff3d4a","Motrix Rot"],["#0D1B3E","#24427a","Navy"],["#1cad6e","#22c98a","Grün"],["#0d9488","#14b8a6","Teal"],["#2563eb","#3b82f6","Mavi"],["#7c3aed","#9361f0","Mor"]];
 const afab=document.createElement('div');afab.className='accfab';afab.innerHTML='<div class="lbl">Akzent · White-Label</div><div class="dots">'+APALS.map((p,i)=>`<button data-c="${p[0]}" onclick="setAccent('${p[0]}','${p[1]}')" title="${p[2]}" class="${i?'':'on'}" style="background:${p[0]}"></button>`).join('')+'</div>';document.body.appendChild(afab);
 
-buildNav();go('dash');
+if(new URLSearchParams(location.search).get('shot'))document.head.insertAdjacentHTML('beforeend','<style>.accfab{display:none!important}</style>');
+buildNav();
+const _h=decodeURIComponent(location.hash.slice(1));
+const _ac=new URLSearchParams(location.search).get('accent');
+if(_ac){const M={red:['#E30A17','#ff3d4a'],teal:['#0d9488','#14b8a6'],blue:['#2563eb','#3b82f6'],mor:['#7c3aed','#9361f0'],green:['#17a34a','#22c55e']};const c=M[_ac]||[_ac,_ac];setAccent(c[0],c[1]);}
+go(PAGEMAP[_h]?_h:'dash');
+applyLang((new URLSearchParams(location.search).get('lang'))||'tr');
+window.addEventListener('hashchange',()=>{const h=decodeURIComponent(location.hash.slice(1));if(PAGEMAP[h])go(h);});
 </script>
 </body>
 </html>

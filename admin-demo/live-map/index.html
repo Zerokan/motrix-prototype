@@ -46,29 +46,29 @@
 <body>
   <div class="bar">
     <div class="brand"><span class="b">⚡</span> MOTRIX <small>OPERATOR</small></div>
-    <span class="ti">Live-Map · Kayseri</span>
+    <span class="ti">Canlı Harita · Kayseri</span>
     <span class="sp"></span>
     <div class="chips" id="chips">
-      <span class="chip on" data-f="all"><span class="d" style="background:#fff"></span>Alle</span>
-      <span class="chip" data-f="ok"><span class="d" style="background:var(--ok)"></span>Available</span>
-      <span class="chip" data-f="trip"><span class="d" style="background:var(--info)"></span>On-Trip</span>
-      <span class="chip" data-f="warn"><span class="d" style="background:var(--warn)"></span>Low-Batt</span>
-      <span class="chip" data-f="bad"><span class="d" style="background:var(--bad)"></span>Offline</span>
+      <span class="chip on" data-f="all"><span class="d" style="background:#fff"></span>Tümü</span>
+      <span class="chip" data-f="ok"><span class="d" style="background:var(--ok)"></span>Müsait</span>
+      <span class="chip" data-f="trip"><span class="d" style="background:var(--info)"></span>Sürüşte</span>
+      <span class="chip" data-f="warn"><span class="d" style="background:var(--warn)"></span>Düşük</span>
+      <span class="chip" data-f="bad"><span class="d" style="background:var(--bad)"></span>Çevrimdışı</span>
     </div>
   </div>
   <div style="position:relative">
     <div id="map"></div>
     <div class="stat">
-      <h4>Flotte · Kayseri</h4>
-      <div class="r"><span>Bikes online</span><b>56</b></div>
-      <div class="r"><span>Auf Fahrt</span><b style="color:var(--info)">8</b></div>
-      <div class="r"><span>Low-Battery</span><b style="color:var(--warn)">3</b></div>
-      <div class="r"><span>Offline</span><b style="color:var(--bad)">1</b></div>
+      <h4>Filo · Kayseri</h4>
+      <div class="r"><span>Çevrimiçi bisiklet</span><b>56</b></div>
+      <div class="r"><span>Sürüşte</span><b style="color:var(--info)">8</b></div>
+      <div class="r"><span>Düşük Batarya</span><b style="color:var(--warn)">3</b></div>
+      <div class="r"><span>Çevrimdışı</span><b style="color:var(--bad)">1</b></div>
     </div>
     <div class="legend">
-      <div class="r"><span class="sw" style="background:rgba(21,163,74,.35);border:1px solid var(--ok)"></span>Service-Area (Millet Bahçeleri)</div>
-      <div class="r"><span class="sw" style="background:rgba(220,38,38,.3);border:1px solid var(--bad)"></span>No-Ride-Zone</div>
-      <div class="r"><span class="sw" style="background:rgba(199,123,10,.3);border:1px solid var(--warn)"></span>Slow-Zone (10 km/h)</div>
+      <div class="r"><span class="sw" style="background:rgba(21,163,74,.35);border:1px solid var(--ok)"></span>Servis Alanı (Millet Bahçeleri)</div>
+      <div class="r"><span class="sw" style="background:rgba(220,38,38,.3);border:1px solid var(--bad)"></span>Yasak Bölge</div>
+      <div class="r"><span class="sw" style="background:rgba(199,123,10,.3);border:1px solid var(--warn)"></span>Yavaş Bölge (10 km/h)</div>
     </div>
   </div>
 
@@ -83,11 +83,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 
 // --- Geofence zones ---
 const service=L.polygon([[38.7290,35.4720],[38.7300,35.4930],[38.7150,35.4950],[38.7135,35.4740]],
-  {color:'#15a34a',weight:2,dashArray:'6 5',fillColor:'#15a34a',fillOpacity:.08}).addTo(map).bindTooltip('Service-Area · Millet Bahçeleri');
+  {color:'#15a34a',weight:2,dashArray:'6 5',fillColor:'#15a34a',fillOpacity:.08}).addTo(map).bindTooltip('Servis Alanı · Millet Bahçeleri');
 const noride=L.polygon([[38.7248,35.4855],[38.7255,35.4890],[38.7228,35.4894],[38.7223,35.4858]],
-  {color:'#dc2626',weight:2,dashArray:'6 5',fillColor:'#dc2626',fillOpacity:.12}).addTo(map).bindTooltip('No-Ride-Zone');
+  {color:'#dc2626',weight:2,dashArray:'6 5',fillColor:'#dc2626',fillOpacity:.12}).addTo(map).bindTooltip('Yasak Bölge');
 const slow=L.polygon([[38.7198,35.4778],[38.7205,35.4815],[38.7178,35.4820],[38.7172,35.4782]],
-  {color:'#c77b0a',weight:2,dashArray:'6 5',fillColor:'#c77b0a',fillOpacity:.12}).addTo(map).bindTooltip('Slow-Zone · max 10 km/h');
+  {color:'#c77b0a',weight:2,dashArray:'6 5',fillColor:'#c77b0a',fillOpacity:.12}).addTo(map).bindTooltip('Yavaş Bölge · maks 10 km/h');
 
 // --- Fleet ---
 const IMEIS=["863235080301854","863235080208943","863235080300997","863235080374687","863235080301821","863235080205550","863235080208844","863235080263427","863235080300997","863235080301999"];
@@ -101,15 +101,15 @@ BIKES.forEach((b,i)=>{
   const [lat,lng,st,bat]=b; const im=IMEIS[i];
   const icon=L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,26],
     html:`<div class="mpin" style="--c:${COL[st]}"><span>${GLY[st]}</span></div>`});
-  const label={ok:'available',trip:'on-trip',warn:'low-battery',bad:'offline'}[st];
+  const label={ok:'müsait',trip:'sürüşte',warn:'düşük batarya',bad:'çevrimdışı'}[st];
   const m=L.marker([lat,lng],{icon}).addTo(map);
   m._st=st;
   m.bindPopup(`<div class="pp"><b>Bike ${im.slice(-6)}</b>
     <div class="row"><span>IMEI</span><b>${im}</b></div>
-    <div class="row"><span>Batterie</span><b>${bat}%</b></div>
-    <div class="row"><span>Status</span><span class="pill" style="background:${COL[st]}22;color:${COL[st]}"><span class="d" style="background:${COL[st]}"></span>${label}</span></div>
-    <div class="row"><span>Zone</span><b>Millet Bahçeleri</b></div>
-    <div class="btns"><button class="u">🔓 Unlock</button><button class="l">🔔 Locate</button><button class="l">🔒 Lock</button></div></div>`);
+    <div class="row"><span>Batarya</span><b>${bat}%</b></div>
+    <div class="row"><span>Durum</span><span class="pill" style="background:${COL[st]}22;color:${COL[st]}"><span class="d" style="background:${COL[st]}"></span>${label}</span></div>
+    <div class="row"><span>Bölge</span><b>Millet Bahçeleri</b></div>
+    <div class="btns"><button class="u">🔓 Kilit Aç</button><button class="l">🔔 Bul</button><button class="l">🔒 Kilitle</button></div></div>`);
   markers.push(m);
 });
 map.fitBounds(service.getBounds().pad(0.15));

@@ -56,6 +56,16 @@
   .mapsvg{width:100%;height:100%;display:block}
   .pin{position:absolute;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(227,10,23,.16),0 4px 10px rgba(0,0,0,.5)}
   .pinbadge{position:absolute;top:-7px;right:-9px;background:#fff;color:#0a1224;font-size:.58rem;font-weight:800;border-radius:10px;padding:0 5px;line-height:1.5}
+  /* vehicle marker: bike + Reichweite (Menzil) + Batterie-Punkt */
+  .vpin{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:3px;z-index:3}
+  .vpin .tag{background:#fff;color:#0a1224;border-radius:8px;padding:2px 6px;font-size:.62rem;font-weight:800;box-shadow:0 3px 8px rgba(0,0,0,.45);display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .vpin .tag .bd{width:7px;height:7px;border-radius:50%;flex:none}
+  .vpin .drop{width:26px;height:26px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);background:var(--primary);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.45);border:2px solid #fff}
+  .vpin .drop b{transform:rotate(-45deg);display:flex}
+  /* cluster marker: eindeutig „N bisiklet" */
+  .cpin{position:absolute;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50%;background:rgba(227,10,23,.94);border:3px solid #fff;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.45);z-index:2}
+  .cpin .n{font-size:.95rem;font-weight:800;line-height:1}
+  .cpin .u{font-size:.4rem;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
   .me{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 10px rgba(227,10,23,.10),0 0 0 20px rgba(227,10,23,.05)}
   .me i{color:#2563eb;font-style:normal;font-size:.9rem}
   .route{position:absolute;inset:0;pointer-events:none}
@@ -145,6 +155,9 @@ const btn=(t,cls='')=>`<button class="pbtn ${cls}">${t}</button>`;
 function mapBg(pins){return `<div class="map"><svg viewBox="0 0 300 600" preserveAspectRatio="xMidYMid slice" class="mapsvg"><rect width="300" height="600" fill="#0a1327"/><g stroke="#152039" stroke-width="15" fill="none" stroke-linecap="round"><path d="M-20 120 L120 260 L90 620"/><path d="M330 50 L180 300 L250 620"/><path d="M-20 430 L330 380"/><path d="M70 -20 L150 190"/></g><g stroke="#10192f" stroke-width="6" fill="none"><path d="M-20 210 L330 175"/><path d="M-20 520 L330 490"/><path d="M40 -20 L90 620"/></g></svg>${pins||''}</div>`;}
 const pin=(x,y,n)=>`<div class="pin" style="left:${x}%;top:${y}%">${bike}${n?`<span class="pinbadge">${n}</span>`:''}</div>`;
 const me=(x,y)=>`<div class="me" style="left:${x}%;top:${y}%"><i>➤</i></div>`;
+const bcol=b=>b>50?'#17c964':b>20?'#f5a524':'#ff5468';
+const vpin=(x,y,rng,batt)=>`<div class="vpin" style="left:${x}%;top:${y}%"><div class="tag"><span class="bd" style="background:${bcol(batt)}"></span>${rng} km</div><div class="drop"><b>${bike}</b></div></div>`;
+const cpin=(x,y,n)=>`<div class="cpin" style="left:${x}%;top:${y}%"><span class="n">${n}</span><span class="u">bisiklet</span></div>`;
 
 const SCREENS=[
 /* ============ ONBOARDING ============ */
@@ -153,9 +166,9 @@ const SCREENS=[
 {g:0,cap:"03 · Kayıt / OTP",s:sb+ab('Doğrulama')+`<div class="ct"><h1 class="h1" style="font-size:1.4rem">Kodu gir</h1><p class="hi" style="margin-bottom:1.2rem">+90 531 ••• 42 numarasına gönderdik</p><div style="display:flex;gap:.6rem;justify-content:center;margin:.5rem 0 1.3rem">${[4,8,2,'',''  ,''].map(d=>`<div class="inp" style="width:44px;text-align:center;font-size:1.3rem;color:#fff;padding:.7rem 0">${d}</div>`).join('')}</div>${btn('Doğrula')}<p class="or">Kodu almadın mı? <span style="color:var(--primary-2)">Tekrar gönder (0:24)</span></p></div>`},
 {g:0,cap:"04 · Konum izni",s:sb+`<div class="ct center"><div class="big-ic">📍</div><h1 class="h1">Konumunu Aç</h1><p class="hi" style="margin:.4rem 1rem 1.5rem">Yakındaki Motrix bisikletlerini haritada görmek için konum iznine ihtiyacımız var.</p>${btn('Konumu Etkinleştir')}<div style="height:.6rem"></div>${btn('Şimdi değil','ghost')}</div>`},
 /* ============ CORE RIDE ============ */
-{g:1,cap:"05 · Ana ekran (Harita)",s:`<div class="scr">${mapBg(pin(40,32,5)+pin(80,28,5)+pin(24,52,5)+pin(52,60,8)+pin(78,62,5)+pin(20,74,5)+me(50,80))}${sb}${logoBar}<div class="scanbtn">${btn('⛶  Şimdi Tara')}</div></div>`},
-{g:1,cap:"06 · Bisiklet bul",s:`<div class="scr">${mapBg(pin(40,30,5)+pin(72,40,8)+pin(30,58,5)+me(50,72))}${sb}${ab('Bisiklet Bul')}<div style="position:absolute;left:1.1rem;right:1.1rem;top:3.4rem;z-index:20"><div class="search">🔍 Adres veya durak ara…</div></div></div>`},
-{g:1,cap:"07 · Yakındaki bisikletler",s:sb+ab('Yakındaki Bisikletler')+`<div class="ct" style="overflow-y:auto">${[['BK2145','120 m · Millet Bahçeleri','92'],['BK2088','240 m · Talas Cd.','74'],['BK2210','310 m · Cumhuriyet Meydanı','88'],['BK1990','450 m · Kampüs','55'],['BK2301','520 m · Sahabiye','63']].map(b=>`<div class="bikecard"><div class="bi">${bike}</div><div><div class="nm">Motrix ${b[0]}</div><div class="mt">${b[1]}</div></div><div class="bt"><b>${b[2]}%</b><span>${'🔋'}</span></div></div>`).join('')}</div>`},
+{g:1,cap:"05 · Ana ekran (Harita)",s:`<div class="scr">${mapBg(vpin(34,30,52,90)+vpin(70,34,41,64)+vpin(26,58,58,88)+vpin(60,62,33,42)+cpin(80,66,6)+me(50,82))}${sb}${logoBar}<div class="scanbtn">${btn('⛶  Şimdi Tara')}</div></div>`},
+{g:1,cap:"06 · Bisiklet bul",s:`<div class="scr">${mapBg(vpin(40,30,48,72)+vpin(72,42,55,88)+cpin(30,60,4)+me(50,72))}${sb}${ab('Bisiklet Bul')}<div style="position:absolute;left:1.1rem;right:1.1rem;top:3.4rem;z-index:20"><div class="search">🔍 Adres veya durak ara…</div></div></div>`},
+{g:1,cap:"07 · Yakındaki bisikletler",s:sb+ab('Yakındaki Bisikletler')+`<div class="ct" style="overflow-y:auto">${[['BK2145','120 m · Millet Bahçeleri','92'],['BK2088','240 m · Talas Cd.','74'],['BK2210','310 m · Cumhuriyet Meydanı','88'],['BK1990','450 m · Kampüs','55'],['BK2301','520 m · Sahabiye','63']].map(b=>`<div class="bikecard"><div class="bi">${bike}</div><div><div class="nm">Motrix ${b[0]}</div><div class="mt">${b[1]}</div></div><div class="bt"><b>${Math.round(b[2]*0.7)} km menzil</b><span>🔋 %${b[2]}</span></div></div>`).join('')}</div>`},
 {g:1,cap:"08 · Güvenlik depozitosu",s:sb+ab('Güvenlik')+`<div class="ct"><div class="big-ic">🔒</div><h1 class="h1" style="text-align:center;font-size:1.3rem">Güvenlik Depozitosu</h1><p class="hi" style="text-align:center;margin:.4rem .5rem 1.2rem">İlk kez sürüş için tek seferlik iade edilebilir ₺50 depozito alınır.</p><div class="card" style="text-align:center;margin-bottom:1.2rem"><div style="color:var(--muted);font-size:.82rem">Depozito tutarı</div><div style="font-size:1.8rem;font-weight:800">₺50,00</div></div>${btn('Depozito öde & devam et')}</div>`},
 {g:1,cap:"09 · QR tara",s:sb+ab('QR Kodu Tara')+`<div class="ct center"><div class="qrbox"><div class="qrgrid">▦</div></div><p class="hi">Bisikletin gidonundaki QR kodu tara</p><div style="height:1rem"></div><div class="inp" style="text-align:center">veya kodu elle gir: <b style="color:#fff">BK____</b></div></div>`},
 {g:1,cap:"10 · Kilit açılıyor",s:`<div class="scr">${mapBg(me(50,55))}${sb}${ab('')}<div class="ct center"><div class="prog"></div><h1 class="h1" style="font-size:1.3rem">Kilit açılıyor…</h1><p class="hi">Motrix BK2145 ile bağlantı kuruluyor</p></div></div>`},
@@ -179,6 +192,9 @@ const SCREENS=[
 {g:4,cap:"25 · Şartlar & Koşullar",s:sb+ab('Şartlar & Koşullar')+`<div class="ct legal"><h4>1. Hizmet</h4>Motrix, Kayseri Büyükşehir Belediyesi iş birliğiyle sunulan paylaşımlı elektrikli bisiklet hizmetidir.<h4>2. Kullanım</h4>Kullanıcı 16 yaşından büyük olmalı ve trafik kurallarına uymalıdır. Kask önerilir.<h4>3. Ücretler</h4>Açılış ücreti ve dakika bazlı ücret uygulanır. Güncel tarife uygulama içinde gösterilir.<h4>4. Sorumluluk</h4>Kullanıcı, sürüş sırasında oluşabilecek zararlardan sorumludur.<h4>5. Depozito</h4>İlk sürüşte tek seferlik ₺50 iade edilebilir depozito alınır.<h4>6. KVKK</h4>Kişisel veriler 6698 sayılı KVKK kapsamında, Türkiye'de barındırılan sunucularda işlenir.</div>`},
 {g:4,cap:"26 · Gizlilik Politikası",s:sb+ab('Gizlilik Politikası')+`<div class="ct legal"><h4>Veri Sorumlusu</h4>Zerokan / Motrix A.Ş.<h4>Toplanan Veriler</h4>Ad, telefon, konum, sürüş geçmişi ve ödeme bilgileri.<h4>Amaç</h4>Hizmetin sunulması, faturalandırma (e-Fatura) ve yasal yükümlülükler.<h4>Veri Yeri</h4>Tüm veriler Türkiye'de (On-Prem) barındırılır — KVKK uyumlu.<h4>Haklarınız</h4>Verilerinize erişim, düzeltme ve silinmesini talep etme hakkına sahipsiniz: kvkk@motrix.com.tr<h4>Saklama</h4>Yasal süre boyunca (10 yıl) saklanır, sonrasında anonimleştirilir.</div>`}
 ];
+const _only=new URLSearchParams(location.search).get('only');
+if(_only){document.head.insertAdjacentHTML('beforeend','<style>.accfab{display:none!important}html,body{background:transparent!important}</style>');const set=new Set(_only.split(',').map(s=>s.trim().padStart(2,'0')));const head=document.querySelector('.head');if(head)head.style.display='none';document.body.style.padding='2.4rem';const fr=SCREENS.filter(s=>set.has(s.cap.slice(0,2)));document.getElementById('grp').innerHTML=`<div class="gallery">${fr.map(s=>`<div class="phone"><div class="frame"><div class="notch"></div>${s.s.startsWith('<div class="scr"')?s.s:`<div class="scr">${s.s}</div>`}</div></div>`).join('')}</div>`;}
+else{
 const GROUPS=["Onboarding","Kern-Flow · Sürüş","Wallet · Cüzdan","Konto · Hesap","Recht & Hilfe"];
 let html='';
 GROUPS.forEach((g,gi)=>{
@@ -189,6 +205,7 @@ GROUPS.forEach((g,gi)=>{
   html+=`</div>`;
 });
 document.getElementById('grp').innerHTML=html;
+}
 
 /* accent switcher (white-label token demo) */
 const PALS=[["#E30A17","#ff3d4a","Motrix Rot"],["#1cad6e","#22c98a","Electra Grün"],["#0d9488","#14b8a6","Teal"],["#2563eb","#3b82f6","Mavi"],["#7c3aed","#9361f0","Mor"]];

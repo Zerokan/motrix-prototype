@@ -119,6 +119,9 @@ const SCREENS=[
 {g:3,cap:"17 · Profil",s:`<div class="scr">${hdr('Profil')}<div class="ct"><div class="prof"><div class="avatar">AR</div><div><div class="nm">Ali R.</div><div class="rl">Saha Teknisyeni · TK-1042</div></div></div><div class="card">${[['Bölge','Millet Bahçeleri'],['Rol','Teknisyen'],['Yetkiler','Swap · Tamir · Devreye al'],['Ekip Lideri','Emre K.']].map(k=>`<div class="kv"><span class="k">${k[0]}</span><b style="font-size:.82rem">${k[1]}</b></div>`).join('')}</div><button class="btn ghost">Çıkış Yap</button></div></div>`},
 {g:3,cap:"18 · Ayarlar",s:`<div class="scr">${hdr('Ayarlar')}<div class="ct"><div class="sect">Bildirimler</div><div class="toggle">Yeni görev bildirimi <span class="sw on"></span></div><div class="toggle">Acil uyarılar <span class="sw on"></span></div><div class="sect">Uygulama</div><div class="toggle">Konumu arka planda paylaş <span class="sw on"></span></div><div class="toggle">Offline mod (senkron sonra) <span class="sw"></span></div><div class="kv" style="margin-top:.6rem"><span class="k">Dil</span><b>Türkçe ›</b></div><div class="kv"><span class="k">Sürüm</span><b>v0.9 (beta)</b></div></div></div>`}
 ];
+const _only=new URLSearchParams(location.search).get('only');
+if(_only){document.head.insertAdjacentHTML('beforeend','<style>.accfab{display:none!important}html,body{background:transparent!important}</style>');const set=new Set(_only.split(',').map(s=>s.trim().padStart(2,'0')));const head=document.querySelector('.head');if(head)head.style.display='none';document.body.style.padding='2.4rem';const fr=SCREENS.filter(s=>set.has(s.cap.slice(0,2)));document.getElementById('grp').innerHTML=`<div class="gallery">${fr.map(s=>`<div><div class="frame"><div class="notch"></div>${s.s}</div></div>`).join('')}</div>`;}
+else{
 const GROUPS=["Giriş · Bugün · Harita","Görevler","Araç & Servis","Vardiya · Konto"];
 let html='';
 GROUPS.forEach((g,gi)=>{
@@ -129,6 +132,7 @@ GROUPS.forEach((g,gi)=>{
   html+=`</div>`;
 });
 document.getElementById('grp').innerHTML=html;
+}
 
 /* accent switcher */
 const PALS=[["#E30A17","#ff3d4a","Motrix Rot"],["#0D1B3E","#24427a","Navy"],["#1cad6e","#22c98a","Grün"],["#0d9488","#14b8a6","Teal"],["#2563eb","#3b82f6","Mavi"],["#7c3aed","#9361f0","Mor"]];
